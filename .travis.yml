@@ -5,4 +5,5 @@ install:
   - pip install -r requirements.txt
 # command to run tests
 script:
+  - find . -name *.py -exec pycodestyle --show-source {} +
   - python -m unittest discover
