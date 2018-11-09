@@ -4,6 +4,8 @@ import os
 
 import pandas as pd
 
+from blueark.common import DATA_DIR_PATH
+
 
 def get_all_file_paths(dir_path):
     """Creates dictionary holding file name keys and absolute path values for all files in a dir.
@@ -38,3 +40,16 @@ def load_data_files(file_name_dict):
             all_data[file_name][sheet] = pd.read_excel(xls, sheet)
 
     return all_data
+
+
+def load_all_blueark_data(data_dir_path=DATA_DIR_PATH):
+    """Loads all blue ark data from the default data folder in the project root directory."""
+
+    assert os.path.exists(data_dir_path), 'provided data_dir_path {} does not exist'.format(data_dir_path)
+
+    return load_data_files(get_all_file_paths(data_dir_path))
+
+
+# TODO: aggregate all data in one single pandas data frame
+def aggregate_all_data_to_df():
+    return NotImplementedError
