@@ -5,8 +5,6 @@
 import unittest
 
 import numpy as np
-
-from blueark.optmization.opt import OptimizationProblem
 from blueark.optmization.ScipyMinimizer import ScipySolver
 
 
