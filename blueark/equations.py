@@ -153,7 +153,7 @@ class SymbolicNode(EvalNode):
         self.factor += factor
 
     def __str__(self):
-        return f"{self.factor}{self.value}"
+        return f"{self.factor} * {self.value}"
 
     def __eq__(self, other):
         if type(other) is SymbolicNode:
@@ -193,7 +193,7 @@ class NaryPlus(EvalNode):
     def __str__(self):
         result = " + ".join([str(child) for child in self.children])
         if self.factor != 1.0:
-            result = f"{self.factor}({result})"
+            result = f"{self.factor} * ({result})"
         return result
 
     def __iter__(self):
