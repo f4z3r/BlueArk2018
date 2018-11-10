@@ -57,14 +57,14 @@ def get_all_coefficients(equations):
     return sorted(set(flat_names))
 
 
-def build_matrix(equations):
+def build_matrix(equations, all_coeff_names):
     """Given a list of equations build the matrix and target vector."""
 
     matrix = []
     rhs_vector = []
     equality_type_vector = []
 
-    sorted_coeff_names = sorted(get_all_coefficients(equations))
+    sorted_coeff_names = sorted(all_coeff_names)
     coeff_indices = {name: idx for idx, name in enumerate(sorted_coeff_names)}
     n_coefficients = len(sorted_coeff_names)
 

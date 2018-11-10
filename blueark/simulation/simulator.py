@@ -10,6 +10,7 @@ import os
 
 import blueark.simulation.optimizationwrapper as cpp_wrapper
 import blueark.equations_parsing as equ_parse
+from blueark.model.sample_model import Model
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             '../..'))
@@ -21,8 +22,8 @@ CPP_EXE_FILE_PATH = os.path.join(PROJECT_ROOT,
 BOUNDS_FILE_NAME = 'bounds.dat'
 MATRIX_FILE_NAME = 'matrix.dat'
 
-N_ITEMS = 17  # HARDCODED NUMBER OF ITEMS IN OUR TEST NETWORK
-
+N_ITEMS = 18  # HARDCODED NUMBER OF ITEMS IN OUR TEST NETWORK
+ALL_COEFFICIENTS = {'x_{}'.format(idx) for idx in range(N_ITEMS)}
 
 class Simulator:
     def __init__(self, initial_state, consumer_data, n_steps, data_dir):
@@ -39,34 +40,35 @@ class Simulator:
 
     def execute_main_loop(self):
 
-        # TODO: In creation.s
+        model = Model()
 
         for step in range(self.n_steps):
             current_consumption = self._consumation_on_day(step)
 
-            # TODO by Jakob
-            constr_equations, turbine_list = get_constraints(current_consumption)
-            all_coefficients = equ_parse.get_all_coefficients(constr_equations)
+            model.set_consumer_usage(*list(current_consumption.values()))
+            constr_equations, turbine_list = model.gen_constraints()
+
 
             constrains, bounds = self.filter_equations(constr_equations)
 
-            turbine_dict = Simulator.create_turbine_dict(turbine_list)
+            turbine_dict = Simulator.create_turbine_dict(turbine_list,
+                                                         ALL_COEFFICIENTS)
 
             matrix, rhs_vec, equ_vec, sort_coeffs = \
-                equ_parse.build_matrix(constr_equations)
+                equ_parse.build_matrix(constr_equations, ALL_COEFFICIENTS)
 
             equ_parse.write_matrix_file(matrix, equ_vec, rhs_vec,
                                         os.path.join(DATA_DIR,
                                                      MATRIX_FILE_NAME))
 
-            bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_coefficients)
+            bounds_equ_dict = self.create_bounds_equ_dict(bounds, ALL_COEFFICIENTS)
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
                                         os.path.join(DATA_DIR, BOUNDS_FILE_NAME))
 
             cpp_out = cpp_wrapper.call_cpp_optimizer(CPP_EXE_FILE_PATH,
-                                                      BOUNDS_FILE_NAME,
-                                                      MATRIX_FILE_NAME,
-                                                      DATA_DIR)
+                                                     BOUNDS_FILE_NAME,
+                                                     MATRIX_FILE_NAME,
+                                                     DATA_DIR)
 
             self.system_state.update(cpp_out, current_consumption)
 
@@ -104,6 +106,18 @@ class Simulator:
                 upper_bound_dict[name] = -1.0
 
         return upper_bound_dict
+
+    @staticmethod
+    def filter_equations(constr_equations):
+        constraints = []
+        bounds = []
+
+        for equ in constr_equations:
+            if '+' not in equ:
+                bounds.append(equ)
+            else:
+                constraints.append(equ)
+        return constraints, bounds
 
 
 class SystemState:
