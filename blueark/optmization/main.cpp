@@ -18,8 +18,9 @@ int main(){
   int n, m;
 
   std::cin >> n >> m;
+  cout << m << " " << n << std::endl;
   std::vector<std::string> names(n);
-  Program lp(CGAL::EQUAL, true, 0, false, 0);
+  Program lp(CGAL::SMALLER, true, 0, false, 0);
   double a, b, c, eq;
 
   for(int var = 0; var < n; ++var){
@@ -38,16 +39,17 @@ int main(){
   // each of the following m lines is:
   // a[i][0] ... a[i][n-1] <= b[i]
   // where "<=" is an integer, 0 if equal
-
+  cout << m << " " << n << std::endl;
   for(int constraint = 0; constraint < m; ++constraint){
     for(int variable = 0; variable < n; ++variable){
       cin >> a;
       lp.set_a(variable, constraint, a);
     }
     cin >> eq >> b;
+    cout << eq << " " << b << std::endl;
     lp.set_b(constraint, b);
-    if(eq == 1){
-      lp.set_r(constraint, CGAL::SMALLER);
+    if(eq == 0){
+      lp.set_r(constraint, CGAL::EQUAL);
     }
   }
 
@@ -59,7 +61,9 @@ int main(){
     std::cout << -CGAL::to_double(s.objective_value()) << "\n";
   }
   CGAL::Quadratic_program_solution<ET>::Variable_value_iterator 
-    opt = s.variable_values_begin(); 
+    opt = s.variable_values_begin();
+
+    cout << "hello\n";
   for(int i = 0; i < n; ++i){
     cout << names[i] << "," << CGAL::to_double(*(opt + i)) << "\n";
   }
