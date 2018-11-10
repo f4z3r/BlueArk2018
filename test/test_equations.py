@@ -8,6 +8,58 @@ from blueark.equations import *
 
 
 class TestEquations(unittest.TestCase):
+    def test_symbol_generator(self):
+        self.assertEqual(SymbolGenerator.gen(), "x_0")
+        self.assertEqual(SymbolGenerator.gen(), "x_1")
+        self.assertEqual(SymbolGenerator.gen(), "x_2")
+        self.assertEqual(SymbolGenerator.gen(), "x_3")
+        self.assertEqual(SymbolGenerator.gen(), "x_4")
+
+    def test_equalities(self):
+        self.assertEqual(LiteralNode(5.3), LiteralNode(5.3))
+        self.assertNotEqual(LiteralNode(5.3), LiteralNode(5.4))
+        self.assertEqual(SymbolicNode("-x_0"), SymbolicNode("-x_0"))
+        sym1 = SymbolicNode("-x_0")
+        sym2 = SymbolicNode("x_0")
+        sym1.scalar_mul(-30)
+        sym2.scalar_mul(30)
+        self.assertEqual(sym1, sym2)
+        sym1 = SymbolicNode("-x_0")
+        sym2 = SymbolicNode("x_0")
+        sym1.scalar_mul(-30)
+        sym2.scalar_mul(-30)
+        self.assertNotEqual(sym1, sym2)
+        eq1 = NaryPlus(LiteralNode(-2), LiteralNode(9), SymbolicNode("-y"))
+        eq2 = NaryPlus(LiteralNode(7), SymbolicNode("-y"))
+        self.assertEqual(eq1, eq2)
+        eq1 = NaryPlus(LiteralNode(-1), LiteralNode(9), SymbolicNode("-y"))
+        eq2 = NaryPlus(LiteralNode(7), SymbolicNode("-y"))
+        self.assertNotEqual(eq1, eq2)
+
+    def test_equalities_constraints(self):
+        # -2 + 9 + -2y >= z
+        sym1 = SymbolicNode("-y")
+        sym1.scalar_mul(2)
+        lhs = NaryPlus(LiteralNode(-2), LiteralNode(9), sym1)
+        rhs = SymbolicNode("z")
+        constraint1 = GreaterThanConstraint(lhs, rhs)
+        # 7 + -y + -z >= y
+        lhs = NaryPlus(LiteralNode(7), SymbolicNode("-y"), SymbolicNode("-z"))
+        rhs = SymbolicNode("y")
+        constraint2 = GreaterThanConstraint(lhs, rhs)
+        self.assertEqual(constraint1, constraint2)
+        # -2 + 9 + -2y >= z
+        sym1 = SymbolicNode("-y")
+        sym1.scalar_mul(2)
+        lhs = NaryPlus(LiteralNode(-2), LiteralNode(9), sym1)
+        rhs = SymbolicNode("z")
+        constraint1 = GreaterThanConstraint(lhs, rhs)
+        # 7 + -y + z >= y
+        lhs = NaryPlus(LiteralNode(7), SymbolicNode("-y"), SymbolicNode("z"))
+        rhs = SymbolicNode("y")
+        constraint2 = GreaterThanConstraint(lhs, rhs)
+        self.assertNotEqual(constraint1, constraint2)
+
     def test_stringify(self):
         lit1 = LiteralNode(5)
         lit2 = LiteralNode(10)
@@ -72,8 +124,7 @@ class TestEquations(unittest.TestCase):
         `-x = y`
         """
         sym1 = SymbolicNode("y")
-        equation = NaryPlus(sym1)
-        constraint = EqualityConstraint(NaryPlus(SymbolicNode("-x")), equation)
+        constraint = EqualityConstraint(NaryPlus(SymbolicNode("-x")), sym1)
         self.assertEqual(str(constraint), "1.0y + 1.0x = 0.0")
 
     def test_geq_constraint(self):
@@ -83,8 +134,7 @@ class TestEquations(unittest.TestCase):
         sym1 = SymbolicNode("y")
         lit1 = LiteralNode(5)
         equation = NaryPlus(sym1, lit1)
-        constraint = GreaterThanConstraint(NaryPlus(SymbolicNode("z")),
-                                           equation)
+        constraint = GreaterThanConstraint(SymbolicNode("z"), equation)
         self.assertEqual(str(constraint), "1.0y + -1.0z <= -5.0")
 
     def test_geq_constraint_2(self):
