@@ -8,6 +8,7 @@ it will write the system state to a data file continuously.
 
 import os
 import subprocess
+import shutil
 
 import blueark.equations_parsing as equ_parse
 from blueark.model.sample_model import Model2
@@ -72,10 +73,10 @@ class Simulator:
                                                      BOUNDS_FILE_NAME),
                                         len(constrains))
 
-            cpp_out = call_cpp_optimizer(CPP_EXE_FILE_PATH,
-                                         BOUNDS_FILE_NAME,
-                                         MATRIX_FILE_NAME,
-                                         DATA_DIR)
+            call_cpp_optimizer(CPP_EXE_FILE_PATH,
+                                     BOUNDS_FILE_NAME,
+                                     MATRIX_FILE_NAME,
+                                     DATA_DIR)
 
             # self.system_state.update(cpp_out, current_consumption)
 
@@ -199,4 +200,6 @@ def call_cpp_optimizer(exe_path, bounds_file_name,
     print(call_str)
     print(data_dir_path)
 
-    subprocess.run(call_str, cwd=data_dir_path, shell=True)
+    subprocess.call(call_str, cwd=data_dir_path, shell=True)
+
+    os.remove(os.path.join(data_dir_path, 'output.txt'))
