@@ -34,11 +34,6 @@ class TestOptimizer(unittest.TestCase):
 
         ret = solver.solve()
 
-        print(70 * '=')
-        print('\tOptimization results:')
-        print(ret)
-        print(70 * '=')
-
         # self.assertEqual(ret.value, 80, 0.5)
 
 

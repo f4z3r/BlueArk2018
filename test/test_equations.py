@@ -66,12 +66,12 @@ class TestEquations(unittest.TestCase):
         binaryadd = NaryPlus(lit1, lit2)
         self.assertEqual(str(binaryadd), "5.0 + 10.0")
         binaryadd.scalar_mul(2)
-        self.assertEqual(str(binaryadd), "2.0(5.0 + 10.0)")
+        self.assertEqual(str(binaryadd), "2.0 * (5.0 + 10.0)")
 
     def test_stringify_fact(self):
         lit1 = SymbolicNode("-x")
         lit1.scalar_mul(4.5)
-        self.assertEqual(str(lit1), "-4.5x")
+        self.assertEqual(str(lit1), "-4.5 * x")
 
     def test_stringify_fact_2(self):
         lit1 = LiteralNode(2)
@@ -100,10 +100,10 @@ class TestEquations(unittest.TestCase):
         lit2 = LiteralNode(15)
         binaryadd2 = NaryPlus(sym2, lit2)
         equation = NaryPlus(binaryadd1, binaryadd2)
-        self.assertEqual(str(equation), "1.0x + 10.0 + 1.0y + 15.0")
-        self.assertEqual(str(equation.evaluate()), "25.0 + 1.0x + 1.0y")
+        self.assertEqual(str(equation), "1.0 * x + 10.0 + 1.0 * y + 15.0")
+        self.assertEqual(str(equation.evaluate()), "25.0 + 1.0 * x + 1.0 * y")
         equation.scalar_mul(3)
-        self.assertEqual(str(equation.evaluate()), "75.0 + 3.0x + 3.0y")
+        self.assertEqual(str(equation.evaluate()), "75.0 + 3.0 * x + 3.0 * y")
 
     def test_equality_constraint(self):
         """Test constant propagated equality output for constraint
@@ -117,7 +117,7 @@ class TestEquations(unittest.TestCase):
         binaryadd2 = NaryPlus(sym2, lit2)
         equation = NaryPlus(binaryadd1, binaryadd2)
         constraint = EqualityConstraint(NaryPlus(LiteralNode(100)), equation)
-        self.assertEqual(str(constraint), "1.0x + 1.0y = 75.0")
+        self.assertEqual(str(constraint), "1.0 * x + 1.0 * y = 75.0")
 
     def test_equality_constraint_2(self):
         """Test constant propagated equality output for constraint
@@ -125,7 +125,7 @@ class TestEquations(unittest.TestCase):
         """
         sym1 = SymbolicNode("y")
         constraint = EqualityConstraint(NaryPlus(SymbolicNode("-x")), sym1)
-        self.assertEqual(str(constraint), "1.0y + 1.0x = 0.0")
+        self.assertEqual(str(constraint), "1.0 * y + 1.0 * x = 0.0")
 
     def test_geq_constraint(self):
         """Test constant propagated equality output for constraint
@@ -135,7 +135,7 @@ class TestEquations(unittest.TestCase):
         lit1 = LiteralNode(5)
         equation = NaryPlus(sym1, lit1)
         constraint = GreaterThanConstraint(SymbolicNode("z"), equation)
-        self.assertEqual(str(constraint), "1.0y + -1.0z <= -5.0")
+        self.assertEqual(str(constraint), "1.0 * y + -1.0 * z <= -5.0")
 
     def test_geq_constraint_2(self):
         """Test constant propagated equality output for constraint
@@ -150,7 +150,7 @@ class TestEquations(unittest.TestCase):
         lit3 = LiteralNode(5)
         ternaryadd2 = NaryPlus(sym2, sym3, lit3)
         constraint = GreaterThanConstraint(ternaryadd1, ternaryadd2)
-        self.assertEqual(str(constraint), "1.0x + -1.0y + -1.0z <= 10.0")
+        self.assertEqual(str(constraint), "1.0 * x + -1.0 * y + -1.0 * z <= 10.0")
 
     def test_symbol_merging(self):
         """Test if symbol merging works properly."""
@@ -160,4 +160,4 @@ class TestEquations(unittest.TestCase):
         sym3 = SymbolicNode("z")
         sym3.scalar_mul(3)
         ternaryadd = NaryPlus(sym1, sym2, sym3)
-        self.assertEqual(str(ternaryadd.evaluate()), "-42.6z + 1.0x")
+        self.assertEqual(str(ternaryadd.evaluate()), "-42.6 * z + 1.0 * x")
