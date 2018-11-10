@@ -1,11 +1,11 @@
 #!/usr/bin/env python3 -O
 
-from blueark.model.sample_model import Model
+from blueark.model.sample_model import Model2
 
 
 def return_something():
-    model = Model()
-    model.set_consumer_usage(150, 150, 150, 150, 150, 150)
+    model = Model2()
+    model.set_consumer_usage(150, 150, 150, 150, 150)
     constraints, maximisers = model.gen_constraints()
     for constraint in constraints:
         print(constraint)
