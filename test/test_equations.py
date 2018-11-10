@@ -15,6 +15,27 @@ class TestEquations(unittest.TestCase):
         self.assertEqual(SymbolGenerator.gen(), "x_3")
         self.assertEqual(SymbolGenerator.gen(), "x_4")
 
+    def test_equalities(self):
+        self.assertEqual(LiteralNode(5.3), LiteralNode(5.3))
+        self.assertNotEqual(LiteralNode(5.3), LiteralNode(5.4))
+        self.assertEqual(SymbolicNode("-x_0"), SymbolicNode("-x_0"))
+        sym1 = SymbolicNode("-x_0")
+        sym2 = SymbolicNode("x_0")
+        sym1.scalar_mul(-30)
+        sym2.scalar_mul(30)
+        self.assertEqual(sym1, sym2)
+        sym1 = SymbolicNode("-x_0")
+        sym2 = SymbolicNode("x_0")
+        sym1.scalar_mul(-30)
+        sym2.scalar_mul(-30)
+        self.assertNotEqual(sym1, sym2)
+        eq1 = NaryPlus(LiteralNode(-2), LiteralNode(9), SymbolicNode("-y"))
+        eq2 = NaryPlus(LiteralNode(7), SymbolicNode("-y"))
+        self.assertEqual(eq1, eq2)
+        eq1 = NaryPlus(LiteralNode(-1), LiteralNode(9), SymbolicNode("-y"))
+        eq2 = NaryPlus(LiteralNode(7), SymbolicNode("-y"))
+        self.assertNotEqual(eq1, eq2)
+
     def test_stringify(self):
         lit1 = LiteralNode(5)
         lit2 = LiteralNode(10)

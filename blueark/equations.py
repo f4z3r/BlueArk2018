@@ -53,6 +53,14 @@ class EvalNode(metaclass=abc.ABCMeta):
 
         return constant, nodes
 
+    @abc.abstractmethod
+    def __hash__(self):
+        pass
+
+    @abc.abstractmethod
+    def __eq__(self, other):
+        pass
+
 
 class LiteralNode(EvalNode):
     """Node containing a numerical value"""
@@ -80,6 +88,14 @@ class LiteralNode(EvalNode):
 
     def __str__(self):
         return f"{float(self.value)}"
+
+    def __eq__(self, other):
+        if type(other) is LiteralNode:
+            return self.value == other.value
+        return False
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class SymbolicNode(EvalNode):
@@ -131,6 +147,14 @@ class SymbolicNode(EvalNode):
     def __str__(self):
         return f"{self.factor}{self.value}"
 
+    def __eq__(self, other):
+        if type(other) is SymbolicNode:
+            return self.value == other.value and self.factor == other.factor
+        return False
+
+    def __hash__(self):
+        return hash((self.value, self.factor))
+
 
 class NaryPlus(EvalNode):
     """A n-ary plus operation between several nodes."""
@@ -167,6 +191,15 @@ class NaryPlus(EvalNode):
 
     def __iter__(self):
         return iter(self.children)
+
+    def __eq__(self, other):
+        if type(other) is NaryPlus:
+            return set(self.evaluate().children) == \
+                   set(other.evaluate().children)
+        return False
+
+    def __hash__(self):
+        return hash(tuple([self.factor] + self.children))
 
 
 class ConstraintNode(metaclass=abc.ABCMeta):
