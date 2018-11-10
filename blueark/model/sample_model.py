@@ -91,11 +91,11 @@ class Model2:
         self.pipe_bottom_right = Pipe([self.tank_bottom_right], 500, 60)
         # x_13
         self.tank_middle_right = Tank([self.pipe_bottom_right, self.consumers[4]], 4000)
-        # x_15
+        # x_14
         self.pipe_top_right = Pipe([self.tank_middle_right], 1000, 50)
-        # x_16
+        # x_15
         self.pipe_top = Pipe([self.pipe_top_right, self.pipe_left_top], 2000)
-        # x_17
+        # x_16
         self.source = Source(self.pipe_top)
 
     def set_consumer_usage(self, *weights):
