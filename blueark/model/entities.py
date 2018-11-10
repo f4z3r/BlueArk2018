@@ -52,7 +52,7 @@ class Pipe(Entity):
             k = self.throughput * self.max_power / self.max_throughput
             eqs = []
             for child in self.children:
-                eqs.extend(list(map(lambda eq: equations.FactorNode(eq, k), child.demand_equations())))
+                eqs.extend(list(map(lambda eq: eq.scalar_mul(k), child.demand_equations())))
             return eqs
         else:
             eqs = []
