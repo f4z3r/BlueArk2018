@@ -8,6 +8,13 @@ from blueark.equations import *
 
 
 class TestEquations(unittest.TestCase):
+    def test_symbol_generator(self):
+        self.assertEqual(SymbolGenerator.gen(), "x_0")
+        self.assertEqual(SymbolGenerator.gen(), "x_1")
+        self.assertEqual(SymbolGenerator.gen(), "x_2")
+        self.assertEqual(SymbolGenerator.gen(), "x_3")
+        self.assertEqual(SymbolGenerator.gen(), "x_4")
+
     def test_stringify(self):
         lit1 = LiteralNode(5)
         lit2 = LiteralNode(10)

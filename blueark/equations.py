@@ -5,6 +5,15 @@
 import abc
 
 
+class SymbolGenerator:
+    _idx = -1
+
+    @classmethod
+    def gen(cls):
+        cls._idx += 1
+        return f"x_{cls._idx}"
+
+
 class EvalNode(metaclass=abc.ABCMeta):
     """Abstract base class for nodes that can be computationally evaluated."""
     @abc.abstractmethod
@@ -121,7 +130,6 @@ class SymbolicNode(EvalNode):
 
     def __str__(self):
         return f"{self.factor}{self.value}"
-
 
 
 class NaryPlus(EvalNode):
