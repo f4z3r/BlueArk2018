@@ -47,19 +47,39 @@ class TestEquations(unittest.TestCase):
         lit2 = LiteralNode(15)
         binaryadd2 = NaryPlus(sym2, lit2)
         equation = NaryPlus(binaryadd1, binaryadd2)
-        constraint = EqualityConstraint(LiteralNode(100), equation)
+        constraint = EqualityConstraint(NaryPlus(LiteralNode(100)), equation)
         self.assertEqual(str(constraint), "x + y = 75")
 
-    def test_leq_constraint(self):
+    def test_equality_constraint_2(self):
         """Test constant propagated equality output for constraint
-        `-100 <= (-x + 10) + (y + 15)`
+        `-x = y`
         """
-        sym1 = SymbolicNode("-x")
+        sym1 = SymbolicNode("y")
+        equation = NaryPlus(sym1)
+        constraint = EqualityConstraint(NaryPlus(SymbolicNode("-x")), equation)
+        self.assertEqual(str(constraint), "y + x = 0")
+
+    def test_geq_constraint(self):
+        """Test constant propagated equality output for constraint
+        `z >= y + 5`
+        """
+        sym1 = SymbolicNode("y")
+        lit1 = LiteralNode(5)
+        equation = NaryPlus(sym1, lit1)
+        constraint = GreaterThanConstraint(NaryPlus(SymbolicNode("z")), equation)
+        self.assertEqual(str(constraint), "y + -z <= -5")
+
+    def test_geq_constraint_2(self):
+        """Test constant propagated equality output for constraint
+        `z + 10 + 5>= x + -y + 5`
+        """
+        sym1 = SymbolicNode("z")
         lit1 = LiteralNode(10)
-        binaryadd1 = NaryPlus(sym1, lit1)
-        sym2 = SymbolicNode("y")
-        lit2 = LiteralNode(15)
-        binaryadd2 = NaryPlus(sym2, lit2)
-        equation = NaryPlus(binaryadd1, binaryadd2)
-        constraint = LessThanConstraint(LiteralNode(-100), equation)
-        self.assertEqual(str(constraint), "-x + y >= -125")
+        lit2 = LiteralNode(5)
+        ternaryadd1 = NaryPlus(sym1, lit1, lit2)
+        sym2 = SymbolicNode("x")
+        sym3 = SymbolicNode("-y")
+        lit3 = LiteralNode(5)
+        ternaryadd2 = NaryPlus(sym2, sym3, lit3)
+        constraint = GreaterThanConstraint(ternaryadd1, ternaryadd2)
+        self.assertEqual(str(constraint), "x + -y + -z <= 10")
