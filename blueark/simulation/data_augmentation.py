@@ -8,11 +8,11 @@ class DataAugmenter:
 
     def generate_consumptions(self):
 
-        consumptions = []
+        consumptions = {}
 
-        for _ in range(self.n_consumer):
+        for idx in range(self.n_consumer):
             consumer = Consumer()
-            consumptions.append(consumer.create_consumption_data(self.n_days))
+            consumptions[idx] = consumer.create_consumption_data(self.n_days)
 
         return consumptions
 

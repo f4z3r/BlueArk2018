@@ -29,6 +29,7 @@ class Simulator:
         model.build_first_time(consumation)
 
         for day in range(1, self.n_days):
+            raise NotImplementedError
             system_state = None
             consumation = self.get_consumation_for_day(day)
             model.rebuild(consumation, system_state)
@@ -47,8 +48,9 @@ class ModelBuilder:
 
 class SystemState:
 
-    def __init__(self):
-        self.consumer_consumptions = {}
+    def __init__(self, all_consumptions, time_step):
+        self.all_consumptions = all_consumptions
+        self.time_step = time_step
         self.tank_levels = {}
         self.pipe_through_puts = {}
         self.drainer_outlet = {}
@@ -63,7 +65,7 @@ class SystemState:
 
         self.append_state_to_file()
 
-        self.consumer_consumptions = consumer_consumptions
+        self.consumptions_one_day = consumer_consumptions
         self.tank_levels = tank_levels
         self.pipe_through_puts = pipe_throughput
         self.drainer_outlet = drainer_outlet
