@@ -55,7 +55,7 @@ class Simulator:
                                                          ALL_COEFFICIENTS)
 
             matrix, rhs_vec, equ_vec, sort_coeffs = \
-                equ_parse.build_matrix(constr_equations, ALL_COEFFICIENTS)
+                equ_parse.build_matrix(constr_equations)
 
             equ_parse.write_matrix_file(matrix, equ_vec, rhs_vec,
                                         os.path.join(DATA_DIR,
