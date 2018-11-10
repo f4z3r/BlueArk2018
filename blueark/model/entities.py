@@ -129,6 +129,8 @@ class Source(Entity):
             maximizer_res += maximizers
         child_sum = NaryPlus(*[child.my_symbol for child in self.children])
         lhs = NaryPlus(self.my_symbol)
+        if self.throughput is not None:
+            constraint_res += [EqualityConstraint(lhs, NaryPlus(LiteralNode(self.throughput)))]
         constraint_res += [EqualityConstraint(lhs, child_sum)]
 
         return constraint_res, maximizer_res
