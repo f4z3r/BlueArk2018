@@ -1,12 +1,11 @@
 import blueark.model.entities as entities
 
-consumer1 = entities.Consumer(200)
-consumer2 = entities.Consumer(150)
-right = entities.Pipe(consumer2, 200, 0.5, 300)
-left = entities.Pipe(consumer2, 300, 0, 300)
-tank = entities.Tank([left, right], 250000, 10000)
-tankToSrc = entities.Pipe(tank, 300, 0, 300)
-src = entities.Source(tankToSrc, 100, False)
+src = entities.Source(30, False)
+srcToTank = entities.Pipe([src], 300, 0, 300)
+tank = entities.Tank([srcToTank], 2500, 1000)
+left = entities.Pipe([tank], 300, 0, 300)
+consumer1 = entities.Consumer([left], 100)
+right = entities.Pipe([tank], 200, 0.5, 300)
+consumer2 = entities.Consumer([left, right], 100)
 
-graph = src
-
+graph = consumer2
