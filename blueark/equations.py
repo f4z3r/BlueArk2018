@@ -17,10 +17,6 @@ class EvalNode(metaclass=abc.ABCMeta):
         """Negates the node"""
         pass
 
-    @abc.abstractmethod
-    def absolute(self):
-        """Returns the absolute value of the node."""
-        pass
 
     @staticmethod
     def propagate_constants(iterable):
@@ -53,9 +49,6 @@ class LiteralNode(EvalNode):
         self.negated = not self.negated
         self.value = -self.value
 
-    def absolute(self):
-        return abs(self.value)
-
     def __str__(self):
         return str(self.value)
 
@@ -75,9 +68,6 @@ class SymbolicNode(EvalNode):
 
     def negate(self):
         self.negated = not self.negated
-
-    def absolute(self):
-        return self.value
 
     def __str__(self):
         result = ""
@@ -99,10 +89,6 @@ class NaryPlus(EvalNode):
     def negate(self):
         for child in self.children:
             child.negate()
-
-    def absolute(self):
-        for child in self.children:
-            child.absolute
 
     def __str__(self):
         return " + ".join([str(child) for child in self.children])
