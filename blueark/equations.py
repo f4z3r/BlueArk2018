@@ -22,6 +22,11 @@ class EvalNode(metaclass=abc.ABCMeta):
         """Returns the children of the node."""
         pass
 
+    @abc.abstractmethod
+    def scalar_mul(self, value):
+        """Multiplies the node by a scalar."""
+        pass
+
     @staticmethod
     def propagate_constants(iterable):
         """Propagates constant evaluations but keeps symbolic nodes intact."""
@@ -34,8 +39,9 @@ class EvalNode(metaclass=abc.ABCMeta):
                 nodes += sub_nodes
             elif type(node) is LiteralNode:
                 constant += node.value
-            elif type(node) is SymbolicNode:
+            else:
                 nodes += [node]
+
         return constant, nodes
 
 
@@ -44,67 +50,112 @@ class LiteralNode(EvalNode):
     def __init__(self, value):
         """Takes `value` as the numerical value contained in the node."""
         self.value = value
-        self.negated = value < 0
 
     def evaluate(self):
-        return self.value
+        return self
 
     def negate(self):
-        self.negated = not self.negated
         self.value = -self.value
+
+    def get_sign(self):
+        """Returns the sign of the node."""
+        if self.value < 0:
+            return "-"
+        return ""
+
+    def scalar_mul(self, value):
+        self.value *= value
 
     def get_children(self):
         return [self]
 
     def __str__(self):
-        return str(self.value)
+        return f"{float(self.value)}"
 
 
 class SymbolicNode(EvalNode):
     """Node containing a symbolic value"""
     def __init__(self, value):
         """Takes `value` as the symbolic value contained in the node."""
-        self.negated = value.startswith("-")
-        if self.negated:
+        if value.startswith("-"):
+            self.factor = -1.0
             self.value = value[1:]
         else:
+            self.factor = 1.0
             self.value = value
 
     def evaluate(self):
         return self.value
 
     def negate(self):
-        self.negated = not self.negated
+        self.factor = -self.factor
 
     def get_children(self):
         return [self]
 
+    def get_symbol(self):
+        return self.value
+
+    def scalar_mul(self, value):
+        self.factor *= value
+
+    def get_sign(self):
+        """Returns the sign of the node."""
+        if self.factor < 0:
+            return "-"
+        return ""
+
+    def merge_symbol(self, iterable):
+        """Adds its own value to a list of symbolic nodes."""
+        for node in iterable:
+            if type(node) is SymbolicNode:
+                if node.get_symbol() == self.value:
+                    node.add_symbolic(self.factor)
+                    return
+        iterable += [self]
+
+    def add_symbolic(self, factor):
+        """Adds adds `factor` to its own factor. This is the result of a simple
+        add between two symbols."""
+        self.factor += factor
+
     def __str__(self):
-        result = ""
-        if self.negated:
-            result += "-"
-        result += self.value
-        return result
+        return f"{self.factor}{self.value}"
+
 
 
 class NaryPlus(EvalNode):
     """A n-ary plus operation between several nodes."""
     def __init__(self, *nodes):
         self.children = nodes
+        self.factor = 1.0
 
     def evaluate(self):
         constant, nodes = EvalNode.propagate_constants(self.children)
-        return NaryPlus(LiteralNode(constant), *nodes)
+        result = []
+        for node in nodes:
+            node.scalar_mul(self.factor)
+            node.merge_symbol(result)
+        constant *= self.factor
+        if constant != 0:
+            return NaryPlus(LiteralNode(constant), *result)
+        return NaryPlus(*result)
 
     def negate(self):
         for child in self.children:
             child.negate()
 
+    def scalar_mul(self, value):
+        self.factor *= value
+
     def get_children(self):
         return self.children
 
     def __str__(self):
-        return " + ".join([str(child) for child in self.children])
+        result = " + ".join([str(child) for child in self.children])
+        if self.factor != 1.0:
+            result = f"{self.factor}({result})"
+        return result
 
     def __iter__(self):
         return iter(self.children)
@@ -117,13 +168,17 @@ class ConstraintNode(metaclass=abc.ABCMeta):
         self.rhs = rhs
 
     def _get_string(self, operator):
-        lhs_constant, lhs_nodes = EvalNode.propagate_constants(self.lhs.get_children())
-        rhs_constant, rhs_nodes = EvalNode.propagate_constants(self.rhs.get_children())
+        """Gets the string based on the operator. This already simplifies the
+        entire constraint."""
+        lhs_constant, lhs_nodes = EvalNode.propagate_constants(
+            self.lhs.get_children())
+        rhs_constant, rhs_nodes = EvalNode.propagate_constants(
+            self.rhs.get_children())
         constant = lhs_constant - rhs_constant
         for node in lhs_nodes:
             node.negate()
         symbols = NaryPlus(*rhs_nodes, *lhs_nodes)
-        return f"{str(symbols)} {operator} {constant}"
+        return f"{str(symbols)} {operator} {LiteralNode(constant)}"
 
 
 class EqualityConstraint(ConstraintNode):
