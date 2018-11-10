@@ -17,6 +17,10 @@ class EvalNode(metaclass=abc.ABCMeta):
         """Negates the node"""
         pass
 
+    @abc.abstractmethod
+    def get_children(self):
+        """Returns the children of the node."""
+        pass
 
     @staticmethod
     def propagate_constants(iterable):
@@ -49,6 +53,9 @@ class LiteralNode(EvalNode):
         self.negated = not self.negated
         self.value = -self.value
 
+    def get_children(self):
+        return [self]
+
     def __str__(self):
         return str(self.value)
 
@@ -68,6 +75,9 @@ class SymbolicNode(EvalNode):
 
     def negate(self):
         self.negated = not self.negated
+
+    def get_children(self):
+        return [self]
 
     def __str__(self):
         result = ""
@@ -90,6 +100,9 @@ class NaryPlus(EvalNode):
         for child in self.children:
             child.negate()
 
+    def get_children(self):
+        return self.children
+
     def __str__(self):
         return " + ".join([str(child) for child in self.children])
 
@@ -99,44 +112,33 @@ class NaryPlus(EvalNode):
 
 class ConstraintNode(metaclass=abc.ABCMeta):
     """Abstract base class for constraint nodes"""
-    def __init__(self, node, evalnode):
-        self.node = node
-        self.evalnode = evalnode
+    def __init__(self, lhs, rhs):
+        self.lhs = lhs
+        self.rhs = rhs
 
     def _get_string(self, operator):
-        constant, nodes = EvalNode.propagate_constants(self.evalnode.children)
-        if type(self.node) is LiteralNode:
-            bound = LiteralNode(self.node.value - constant)
-        else:
-            self.node.negate()
-            nodes += [self.node]
-            bound = LiteralNode(-constant)
-        symbols = NaryPlus(*nodes)
-        return f"{str(symbols)} {operator} {str(bound)}"
+        lhs_constant, lhs_nodes = EvalNode.propagate_constants(self.lhs.get_children())
+        rhs_constant, rhs_nodes = EvalNode.propagate_constants(self.rhs.get_children())
+        constant = lhs_constant - rhs_constant
+        for node in lhs_nodes:
+            node.negate()
+        symbols = NaryPlus(*rhs_nodes, *lhs_nodes)
+        return f"{str(symbols)} {operator} {constant}"
 
 
 class EqualityConstraint(ConstraintNode):
     """Constraint node representing equality"""
-    def __init__(self, node, evalnode):
-        super().__init__(node, evalnode)
+    def __init__(self, lhs, rhs):
+        super().__init__(lhs, rhs)
 
     def __str__(self):
         return self._get_string("=")
 
 
-class LessThanConstraint(ConstraintNode):
-    """Constraint node representing larger or equal"""
-    def __init__(self, node, evalnode):
-        super().__init__(node, evalnode)
-
-    def __str__(self):
-        return self._get_string(">=")
-
-
 class GreaterThanConstraint(ConstraintNode):
     """Constraint node representing smaller or equal"""
-    def __init__(self, node, evalnode):
-        super().__init__(node, evalnode)
+    def __init__(self, lhs, rhs):
+        super().__init__(lhs, rhs)
 
     def __str__(self):
         return self._get_string("<=")
