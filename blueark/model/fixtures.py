@@ -9,4 +9,3 @@ tankToSrc = entities.Pipe(tank, 300, 0, 300)
 src = entities.Source(tankToSrc, 100, False)
 
 graph = src
-
