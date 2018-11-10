@@ -101,3 +101,13 @@ class TestEquations(unittest.TestCase):
         ternaryadd2 = NaryPlus(sym2, sym3, lit3)
         constraint = GreaterThanConstraint(ternaryadd1, ternaryadd2)
         self.assertEqual(str(constraint), "1.0x + -1.0y + -1.0z <= 10.0")
+
+    def test_symbol_merging(self):
+        """Test if symbol merging works properly."""
+        sym1 = SymbolicNode("z")
+        sym1.scalar_mul(-45.6)
+        sym2 = SymbolicNode("x")
+        sym3 = SymbolicNode("z")
+        sym3.scalar_mul(3)
+        ternaryadd = NaryPlus(sym1, sym2, sym3)
+        self.assertEqual(str(ternaryadd.evaluate()), "-42.6z + 1.0x")

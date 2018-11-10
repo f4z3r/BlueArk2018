@@ -50,27 +50,21 @@ class LiteralNode(EvalNode):
     def __init__(self, value):
         """Takes `value` as the numerical value contained in the node."""
         self.value = value
-        self.negated = value < 0
 
     def evaluate(self):
         return self
 
     def negate(self):
-        self.negated = not self.negated
         self.value = -self.value
 
     def get_sign(self):
         """Returns the sign of the node."""
-        if self.negated:
+        if self.value < 0:
             return "-"
         return ""
 
     def scalar_mul(self, value):
         self.value *= value
-        if self.value < 0:
-            self.negated = True
-        else:
-            self.negated = False
 
     def get_children(self):
         return [self]
@@ -83,18 +77,18 @@ class SymbolicNode(EvalNode):
     """Node containing a symbolic value"""
     def __init__(self, value):
         """Takes `value` as the symbolic value contained in the node."""
-        self.negated = value.startswith("-")
-        self.factor = 1.0
-        if self.negated:
+        if value.startswith("-"):
+            self.factor = -1.0
             self.value = value[1:]
         else:
+            self.factor = 1.0
             self.value = value
 
     def evaluate(self):
         return self.value
 
     def negate(self):
-        self.negated = not self.negated
+        self.factor = -self.factor
 
     def get_children(self):
         return [self]
@@ -103,22 +97,31 @@ class SymbolicNode(EvalNode):
         return self.value
 
     def scalar_mul(self, value):
-        if value < 0:
-            self.negated = True
-        self.factor *= abs(value)
+        self.factor *= value
 
     def get_sign(self):
         """Returns the sign of the node."""
-        if self.negated:
+        if self.factor < 0:
             return "-"
         return ""
 
+    def merge_symbol(self, iterable):
+        """Adds its own value to a list of symbolic nodes."""
+        for node in iterable:
+            if type(node) is SymbolicNode:
+                if node.get_symbol() == self.value:
+                    node.add_symbolic(self.factor)
+                    return
+        iterable += [self]
+
+    def add_symbolic(self, factor):
+        """Adds adds `factor` to its own factor. This is the result of a simple
+        add between two symbols."""
+        self.factor += factor
+
     def __str__(self):
-        result = ""
-        if self.negated:
-            result += "-"
-        result += f"{self.factor}{self.value}"
-        return result
+        return f"{self.factor}{self.value}"
+
 
 
 class NaryPlus(EvalNode):
@@ -129,10 +132,14 @@ class NaryPlus(EvalNode):
 
     def evaluate(self):
         constant, nodes = EvalNode.propagate_constants(self.children)
+        result = []
         for node in nodes:
             node.scalar_mul(self.factor)
+            node.merge_symbol(result)
         constant *= self.factor
-        return NaryPlus(LiteralNode(constant), *nodes)
+        if constant != 0:
+            return NaryPlus(LiteralNode(constant), *result)
+        return NaryPlus(*result)
 
     def negate(self):
         for child in self.children:
