@@ -12,11 +12,25 @@ class Entity:
         :param children: downstream nodes in the graph
         """
         self.children = children
+        self.parents = set()  # initially empty, will be filled afterwards by propagate_symbols_downstream
+        self.my_symbol = equations.SymbolicNode(equations.SymbolGenerator.gen())
 
     @abc.abstractmethod
     def demand_equations(self):
         """The demand carried by this node as an EvalNode instance"""
         return
+
+    def propagate_symbols_downstream(self, parent_symbol=None):
+        """Finishes to initialize the graph by propagating parent symbols
+        to child nodes
+
+        :param parent_symbol Symbol pushed by parent node
+        """
+        if parent_symbol is not None:
+            self.parents.add(parent_symbol)
+        for child in self.children:
+            child.propagate_symbols_downstream(self.my_symbol)
+
 
 class Tank(Entity):
     def __init__(self, children, capacity, load):
