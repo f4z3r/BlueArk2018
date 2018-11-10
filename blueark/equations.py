@@ -219,9 +219,9 @@ class ConstraintNode(metaclass=abc.ABCMeta):
     def _evaluate(self):
         """Simplifies the constraint as much as possible."""
         lhs_constant, lhs_nodes = EvalNode.propagate_constants(
-            self.lhs.get_children())
+            self.lhs.evaluate().get_children())
         rhs_constant, rhs_nodes = EvalNode.propagate_constants(
-            self.rhs.get_children())
+            self.rhs.evaluate().get_children())
         constant = lhs_constant - rhs_constant
         lhs_nodes = [node.negate() for node in lhs_nodes]
         symbols = NaryPlus(*rhs_nodes, *lhs_nodes).evaluate()

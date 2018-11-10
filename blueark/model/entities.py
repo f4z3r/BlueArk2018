@@ -57,13 +57,12 @@ class Tank(Entity):
         parent_sum = NaryPlus(*self.parents)
         constraint_res += [EqualityConstraint(child_sum, parent_sum)]
         # level constraint
-        lhs = NaryPlus(self.my_symbol)
         child_sum = deepcopy(child_sum)
         child_sum.scalar_mul(2)
-        constraint_res += [EqualityConstraint(lhs, child_sum)]
+        constraint_res += [EqualityConstraint(self.my_symbol, child_sum)]
         # capacity constraint
-        capacity = NaryPlus(LiteralNode(self.capacity))
-        constraint_res += [GreaterThanConstraint(capacity, lhs)]
+        capacity = LiteralNode(self.capacity)
+        constraint_res += [GreaterThanConstraint(capacity, self.my_symbol)]
 
         return constraint_res, maximizer_res
 
@@ -96,9 +95,8 @@ class Pipe(Entity):
         parent_sum = NaryPlus(*self.parents)
         constraint_res += [EqualityConstraint(child_sum, parent_sum)]
         # contraint capacity
-        lhs = NaryPlus(LiteralNode(self.max_throughput))
-        rhs = NaryPlus(self.my_symbol)
-        constraint_res += [GreaterThanConstraint(lhs, rhs)]
+        lhs = LiteralNode(self.max_throughput)
+        constraint_res += [GreaterThanConstraint(lhs, self.my_symbol)]
 
         # add generator power maximizer
         if self.efficiency != 0:
@@ -128,8 +126,7 @@ class Source(Entity):
             constraint_res += constraints
             maximizer_res += maximizers
         child_sum = NaryPlus(*[child.my_symbol for child in self.children])
-        lhs = NaryPlus(self.my_symbol)
-        constraint_res += [EqualityConstraint(lhs, child_sum)]
+        constraint_res += [EqualityConstraint(self.my_symbol, child_sum)]
 
         return constraint_res, maximizer_res
 
@@ -144,10 +141,9 @@ class Consumer(Entity):
         self.demand = demand
 
     def demand_equations(self):
-        lhs = NaryPlus(self.my_symbol)
-        rhs = NaryPlus(LiteralNode(self.demand))
+        rhs = LiteralNode(self.demand)
         parent_sum = NaryPlus(*self.parents)
-        constraint_res = [EqualityConstraint(lhs, parent_sum)]
-        constraint_res += [EqualityConstraint(rhs, lhs)]
+        constraint_res = [EqualityConstraint(self.my_symbol, parent_sum)]
+        constraint_res += [EqualityConstraint(rhs, self.my_symbol)]
 
         return constraint_res, []

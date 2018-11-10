@@ -41,22 +41,22 @@ class TestEquations(unittest.TestCase):
         sym1 = SymbolicNode("-y")
         sym1.scalar_mul(2)
         lhs = NaryPlus(LiteralNode(-2), LiteralNode(9), sym1)
-        rhs = NaryPlus(SymbolicNode("z"))
+        rhs = SymbolicNode("z")
         constraint1 = GreaterThanConstraint(lhs, rhs)
         # 7 + -y + -z >= y
         lhs = NaryPlus(LiteralNode(7), SymbolicNode("-y"), SymbolicNode("-z"))
-        rhs = NaryPlus(SymbolicNode("y"))
+        rhs = SymbolicNode("y")
         constraint2 = GreaterThanConstraint(lhs, rhs)
         self.assertEqual(constraint1, constraint2)
         # -2 + 9 + -2y >= z
         sym1 = SymbolicNode("-y")
         sym1.scalar_mul(2)
         lhs = NaryPlus(LiteralNode(-2), LiteralNode(9), sym1)
-        rhs = NaryPlus(SymbolicNode("z"))
+        rhs = SymbolicNode("z")
         constraint1 = GreaterThanConstraint(lhs, rhs)
         # 7 + -y + z >= y
         lhs = NaryPlus(LiteralNode(7), SymbolicNode("-y"), SymbolicNode("z"))
-        rhs = NaryPlus(SymbolicNode("y"))
+        rhs = SymbolicNode("y")
         constraint2 = GreaterThanConstraint(lhs, rhs)
         self.assertNotEqual(constraint1, constraint2)
 
@@ -124,8 +124,7 @@ class TestEquations(unittest.TestCase):
         `-x = y`
         """
         sym1 = SymbolicNode("y")
-        equation = NaryPlus(sym1)
-        constraint = EqualityConstraint(NaryPlus(SymbolicNode("-x")), equation)
+        constraint = EqualityConstraint(NaryPlus(SymbolicNode("-x")), sym1)
         self.assertEqual(str(constraint), "1.0y + 1.0x = 0.0")
 
     def test_geq_constraint(self):
@@ -135,8 +134,7 @@ class TestEquations(unittest.TestCase):
         sym1 = SymbolicNode("y")
         lit1 = LiteralNode(5)
         equation = NaryPlus(sym1, lit1)
-        constraint = GreaterThanConstraint(NaryPlus(SymbolicNode("z")),
-                                           equation)
+        constraint = GreaterThanConstraint(SymbolicNode("z"), equation)
         self.assertEqual(str(constraint), "1.0y + -1.0z <= -5.0")
 
     def test_geq_constraint_2(self):
