@@ -36,6 +36,30 @@ class TestEquations(unittest.TestCase):
         eq2 = NaryPlus(LiteralNode(7), SymbolicNode("-y"))
         self.assertNotEqual(eq1, eq2)
 
+    def test_equalities_constraints(self):
+        # -2 + 9 + -2y >= z
+        sym1 = SymbolicNode("-y")
+        sym1.scalar_mul(2)
+        lhs = NaryPlus(LiteralNode(-2), LiteralNode(9), sym1)
+        rhs = NaryPlus(SymbolicNode("z"))
+        constraint1 = GreaterThanConstraint(lhs, rhs)
+        # 7 + -y + -z >= y
+        lhs = NaryPlus(LiteralNode(7), SymbolicNode("-y"), SymbolicNode("-z"))
+        rhs = NaryPlus(SymbolicNode("y"))
+        constraint2 = GreaterThanConstraint(lhs, rhs)
+        self.assertEqual(constraint1, constraint2)
+        # -2 + 9 + -2y >= z
+        sym1 = SymbolicNode("-y")
+        sym1.scalar_mul(2)
+        lhs = NaryPlus(LiteralNode(-2), LiteralNode(9), sym1)
+        rhs = NaryPlus(SymbolicNode("z"))
+        constraint1 = GreaterThanConstraint(lhs, rhs)
+        # 7 + -y + z >= y
+        lhs = NaryPlus(LiteralNode(7), SymbolicNode("-y"), SymbolicNode("z"))
+        rhs = NaryPlus(SymbolicNode("y"))
+        constraint2 = GreaterThanConstraint(lhs, rhs)
+        self.assertNotEqual(constraint1, constraint2)
+
     def test_stringify(self):
         lit1 = LiteralNode(5)
         lit2 = LiteralNode(10)

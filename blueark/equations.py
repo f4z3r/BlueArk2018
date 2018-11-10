@@ -159,7 +159,7 @@ class SymbolicNode(EvalNode):
 class NaryPlus(EvalNode):
     """A n-ary plus operation between several nodes."""
     def __init__(self, *nodes):
-        self.children = nodes
+        self.children = list(nodes)
         self.factor = 1.0
 
     def evaluate(self):
@@ -199,7 +199,8 @@ class NaryPlus(EvalNode):
         return False
 
     def __hash__(self):
-        return hash(tuple([self.factor] + self.children))
+        evaluated = self.evaluate()
+        return hash(tuple(set(self.children)))
 
 
 class ConstraintNode(metaclass=abc.ABCMeta):
@@ -207,10 +208,11 @@ class ConstraintNode(metaclass=abc.ABCMeta):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
+        self.operator = None
+        self._evaluate()
 
-    def _get_string(self, operator):
-        """Gets the string based on the operator. This already simplifies the
-        entire constraint."""
+    def _evaluate(self):
+        """Simplifies the constraint as much as possible."""
         lhs_constant, lhs_nodes = EvalNode.propagate_constants(
             self.lhs.get_children())
         rhs_constant, rhs_nodes = EvalNode.propagate_constants(
@@ -218,23 +220,29 @@ class ConstraintNode(metaclass=abc.ABCMeta):
         constant = lhs_constant - rhs_constant
         for node in lhs_nodes:
             node.negate()
-        symbols = NaryPlus(*rhs_nodes, *lhs_nodes)
-        return f"{str(symbols)} {operator} {LiteralNode(constant)}"
+        symbols = NaryPlus(*rhs_nodes, *lhs_nodes).evaluate()
+        self.lhs = symbols
+        self.rhs = LiteralNode(constant)
+
+    def __hash__(self):
+        return hash((hash(self.lhs), self.operator, self.rhs))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __str__(self):
+        return f"{self.lhs} {self.operator} {self.rhs}"
 
 
 class EqualityConstraint(ConstraintNode):
     """Constraint node representing equality"""
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
-
-    def __str__(self):
-        return self._get_string("=")
+        self.operator = "="
 
 
 class GreaterThanConstraint(ConstraintNode):
     """Constraint node representing smaller or equal"""
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
-
-    def __str__(self):
-        return self._get_string("<=")
+        self.operator = "<="
