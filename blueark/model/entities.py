@@ -1,4 +1,4 @@
-import blueark.equations as equations
+from blueark.equations import *
 import abc
 
 
@@ -13,10 +13,10 @@ class Entity:
         """
         self.children = children
         self.parents = set()  # initially empty, will be filled afterwards by propagate_symbols_downstream
-        self.my_symbol = equations.SymbolicNode(equations.SymbolGenerator.gen())
+        self.my_symbol = SymbolicNode(SymbolGenerator.gen())
 
     @abc.abstractmethod
-    def demand_equations(self):
+    def demand_equation(self):
         """The demand carried by this node as an EvalNode instance"""
         return
 
@@ -44,6 +44,11 @@ class Tank(Entity):
         self.capacity = capacity
         self.load = load
 
+    def demand_equation(self):
+        return EqualityConstraint(
+            NaryPlus(*self.parents),
+            NaryPlus(*list(map(lambda child: child.demand_equation, self.children)))
+        )
 
 class Pipe(Entity):
     def __init__(self, children, max_throughput, max_power, throughput):
@@ -61,18 +66,11 @@ class Pipe(Entity):
         self.max_power = max_power
         self.throughput = throughput
 
-    def demand_equations(self):
+    def demand_equation(self):
+        k = 1
         if self.max_power != 0:
             k = self.throughput * self.max_power / self.max_throughput
-            eqs = []
-            for child in self.children:
-                eqs.extend(list(map(lambda eq: eq.scalar_mul(k), child.demand_equations())))
-            return eqs
-        else:
-            eqs = []
-            for child in self.children:
-                eqs.extend(child.demand_equations())
-            return eqs
+        return NaryPlus(*list(map(lambda child: child.demand_equation().scalar_mul(k), self.children)))
 
 
 class Source(Entity):
@@ -97,5 +95,5 @@ class Consumer(Entity):
         Entity.__init__(self, [])
         self.demand = demand
 
-    def demand_equations(self):
-        return [equations.LiteralNode(self.demand)]
+    def demand_equation(self):
+        return LiteralNode(self.demand)
