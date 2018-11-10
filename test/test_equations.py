@@ -83,7 +83,8 @@ class TestEquations(unittest.TestCase):
         sym1 = SymbolicNode("y")
         lit1 = LiteralNode(5)
         equation = NaryPlus(sym1, lit1)
-        constraint = GreaterThanConstraint(NaryPlus(SymbolicNode("z")), equation)
+        constraint = GreaterThanConstraint(NaryPlus(SymbolicNode("z")),
+                                           equation)
         self.assertEqual(str(constraint), "1.0y + -1.0z <= -5")
 
     def test_geq_constraint_2(self):

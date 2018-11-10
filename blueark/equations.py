@@ -139,7 +139,9 @@ class FactorNode(EvalNode):
             return FactorNode(evaluated.node, evaluated.k * self.k).evaluate()
         # distribute factor nodes inside plus nodes
         elif type(evaluated) is NaryPlus:
-            return NaryPlus(*list(map(lambda n: FactorNode(n, self.k).evaluate(), evaluated)))
+            return NaryPlus(*list(map(
+                lambda n: FactorNode(n, self.k).evaluate(),
+                evaluated)))
         # evaluate constant multiplication
         elif type(evaluated) is LiteralNode:
             return LiteralNode(self.k * evaluated.value)
@@ -154,7 +156,8 @@ class FactorNode(EvalNode):
 
     def __str__(self):
         if type(self.node) is SymbolicNode:
-            return f"{self.node.get_sign()}{float(self.k)}{str(self.node.get_symbol())}"
+            return f"{self.node.get_sign()}{float(self.k)}" +\
+                   f"{str(self.node.get_symbol())}"
         else:
             return f"{float(self.k)}({str(self.node)})"
 
@@ -171,7 +174,9 @@ class ConstraintNode(metaclass=abc.ABCMeta):
             return FactorNode(self.node.node, self.node.k * self.k).evaluate()
         # distribute factor nodes inside plus nodes
         elif type(self.node) is NaryPlus:
-            return NaryPlus(*list(map(lambda n: FactorNode(n, self.k).evaluate(), self.node))).evaluate()
+            return NaryPlus(*list(map(
+                lambda n: FactorNode(n, self.k).evaluate(),
+                self.node))).evaluate()
         # evaluate constant multiplication
         elif type(self.node) is LiteralNode:
             return LiteralNode(self.k * self.node.evaluate())
@@ -195,8 +200,12 @@ class ConstraintNode(metaclass=abc.ABCMeta):
         self.rhs = rhs
 
     def _get_string(self, operator):
-        lhs_constant, lhs_nodes = EvalNode.propagate_constants(self.lhs.get_children())
-        rhs_constant, rhs_nodes = EvalNode.propagate_constants(self.rhs.get_children())
+        """Gets the string based on the operator. This already simplifies the
+        entire constraint."""
+        lhs_constant, lhs_nodes = EvalNode.propagate_constants(
+            self.lhs.get_children())
+        rhs_constant, rhs_nodes = EvalNode.propagate_constants(
+            self.rhs.get_children())
         constant = lhs_constant - rhs_constant
         for node in lhs_nodes:
             node.negate()
