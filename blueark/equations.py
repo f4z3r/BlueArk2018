@@ -48,11 +48,17 @@ class LiteralNode(EvalNode):
         self.negated = value < 0
 
     def evaluate(self):
-        return self.value
+        return self
 
     def negate(self):
         self.negated = not self.negated
         self.value = -self.value
+
+    def get_sign(self):
+        """Returns the sign of the node."""
+        if self.negated:
+            return "-"
+        return ""
 
     def get_children(self):
         return [self]
@@ -80,11 +86,20 @@ class SymbolicNode(EvalNode):
     def get_children(self):
         return [self]
 
+    def get_symbol(self):
+        return self.value
+
+    def get_sign(self):
+        """Returns the sign of the node."""
+        if self.negated:
+            return "-"
+        return ""
+
     def __str__(self):
         result = ""
         if self.negated:
             result += "-"
-        result += self.value
+        result += f"{float(1)}{self.value}"
         return result
 
 
@@ -114,6 +129,39 @@ class NaryPlus(EvalNode):
 class FactorNode(EvalNode):
     """A node multiplied by a given factor"""
     def __init__(self, node, k):
+        self.node = node
+        self.k = k
+
+    def evaluate(self):
+        evaluated = self.node.evaluate()
+        # flatten nested factor node
+        if type(evaluated) is FactorNode:
+            return FactorNode(evaluated.node, evaluated.k * self.k).evaluate()
+        # distribute factor nodes inside plus nodes
+        elif type(evaluated) is NaryPlus:
+            return NaryPlus(*list(map(lambda n: FactorNode(n, self.k).evaluate(), evaluated)))
+        # evaluate constant multiplication
+        elif type(evaluated) is LiteralNode:
+            return LiteralNode(self.k * evaluated.value)
+        else:
+            return self
+
+    def get_children(self):
+        return [self]
+
+    def negate(self):
+        self.k = -self.k
+
+    def __str__(self):
+        if type(self.node) is SymbolicNode:
+            return f"{self.node.get_sign()}{float(self.k)}{str(self.node.get_symbol())}"
+        else:
+            return f"{float(self.k)}({str(self.node)})"
+
+
+class ConstraintNode(metaclass=abc.ABCMeta):
+    """Abstract base class for constraint nodes"""
+    def __init__(self, node, evalnode):
         self.node = node
         self.k = k
 
