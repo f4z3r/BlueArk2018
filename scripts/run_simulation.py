@@ -1,10 +1,14 @@
 import os
+import sys
+
+
 
 from blueark.simulation.data_augmentation import DataAugmenter
 from blueark.simulation.simulator import Simulator
 from blueark.simulation.simulator import SystemState
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, PROJECT_ROOT)
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 N_CONSUMERS = 5
 N_TIME_STEPS = 100

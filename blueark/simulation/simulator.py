@@ -7,17 +7,17 @@ it will write the system state to a data file continuously.
 """
 
 import os
+import subprocess
 
-import blueark.simulation.optimizationwrapper as cpp_wrapper
 import blueark.equations_parsing as equ_parse
 from blueark.model.sample_model import Model2
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                            '..'))
-DATA_DIR = os.path.join(PROJECT_ROOT, '..', 'data')
+                                            '../../'))
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 CPP_EXE_FILE_NAME = 'main'
 CPP_EXE_FILE_PATH = os.path.join(PROJECT_ROOT,
-                                 'optmization',
+                                 'blueark/optmization',
                                  CPP_EXE_FILE_NAME)
 BOUNDS_FILE_NAME = 'bounds.dat'
 MATRIX_FILE_NAME = 'matrix.dat'
@@ -38,7 +38,7 @@ class Simulator:
             os.mkdir(data_dir)
 
         with open(os.path.join(data_dir, OUT_FILE_NAME), 'w') as outfile:
-            outfile.write('### FINAL DATA OUTPU ###' + '\n')
+            outfile.write('### FINAL DATA OUTPU ###')
 
         return data_dir
 
@@ -65,32 +65,19 @@ class Simulator:
             equ_parse.write_matrix_file(matrix, equ_vec, rhs_vec,
                                         os.path.join(DATA_DIR,
                                                      MATRIX_FILE_NAME))
-
-<<<<<<< HEAD
-            bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_var_names)
-
-            equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
-                                        os.path.join(DATA_DIR, BOUNDS_FILE_NAME),
-                                        len(constrains))
-
-            cpp_out = cpp_wrapper.call_cpp_optimizer(CPP_EXE_FILE_PATH,
-                                                     BOUNDS_FILE_NAME,
-                                                     MATRIX_FILE_NAME,
-                                                     DATA_DIR)
-
-            self.system_state.update(cpp_out, current_consumption,
-                                     all_var_names)
-=======
+            all_coefficients = equ_parse.get_all_coefficients(constr_equations)
             bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_coefficients)
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
-                                        os.path.join(DATA_DIR, BOUNDS_FILE_NAME))
+                                        os.path.join(DATA_DIR,
+                                                     BOUNDS_FILE_NAME),
+                                        len(constrains))
 
-            cpp_out = cpp_wrapper.call_cpp_optimizer(CPP_EXE_FILE_PATH,
-                                                      BOUNDS_FILE_NAME,
-                                                      MATRIX_FILE_NAME,
-                                                      DATA_DIR)
+            cpp_out = call_cpp_optimizer(CPP_EXE_FILE_PATH,
+                                         BOUNDS_FILE_NAME,
+                                         MATRIX_FILE_NAME,
+                                         DATA_DIR)
 
-            self.system_state.update(cpp_out, current_consumption)
+            # self.system_state.update(cpp_out, current_consumption)
 
     def _consumation_on_day(self, step):
         return {name: cons[step] for name, cons in self.consumer_data.items()}
@@ -197,3 +184,19 @@ class SystemState:
 
     def init_state_file(self):
         raise NotImplementedError
+
+
+def call_cpp_optimizer(exe_path, bounds_file_name,
+                       matrix_file_name, data_dir_path):
+    """Runs a subprocess on the cpp optimizer and gets the """
+
+    if not os.path.isfile(exe_path):
+        raise IOError('Cpp executable does not exist, needs to be compiled.')
+
+    call_str = ' '.join([exe_path, '<', bounds_file_name,
+                                   '<', matrix_file_name])
+
+    print(call_str)
+    print(data_dir_path)
+
+    subprocess.run(call_str, cwd=data_dir_path, shell=True)
