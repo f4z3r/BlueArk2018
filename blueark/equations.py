@@ -64,8 +64,11 @@ class SymbolicNode(EvalNode):
     """Node containing a symbolic value"""
     def __init__(self, value):
         """Takes `value` as the symbolic value contained in the node."""
-        self.value = value
         self.negated = value.startswith("-")
+        if self.negated:
+            self.value = value[1:]
+        else:
+            self.value = value
 
     def evaluate(self):
         return self.value
