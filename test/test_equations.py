@@ -49,3 +49,17 @@ class TestEquations(unittest.TestCase):
         equation = NaryPlus(binaryadd1, binaryadd2)
         constraint = EqualityConstraint(LiteralNode(100), equation)
         self.assertEqual(str(constraint), "x + y = 75")
+
+    def test_leq_constraint(self):
+        """Test constant propagated equality output for constraint
+        `-100 <= (-x + 10) + (y + 15)`
+        """
+        sym1 = SymbolicNode("-x")
+        lit1 = LiteralNode(10)
+        binaryadd1 = NaryPlus(sym1, lit1)
+        sym2 = SymbolicNode("y")
+        lit2 = LiteralNode(15)
+        binaryadd2 = NaryPlus(sym2, lit2)
+        equation = NaryPlus(binaryadd1, binaryadd2)
+        constraint = LessThanConstraint(LiteralNode(-100), equation)
+        self.assertEqual(str(constraint), "-x + y >= -125")
