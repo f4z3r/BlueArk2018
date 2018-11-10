@@ -22,6 +22,16 @@ import numpy as np
 
 class Problem():
     def __init__(self, n=0, A=[], b=[], rel=[], obj=[]):
+        """
+        P = Problem(n=0, A=[], b=[], rel=[], obj=[])
+        if all parameters are set under construction, one can call solve directly.
+        Otherwise, one must do:
+            P = Problem()
+            P.add_variables(n)
+            P.add_constraints(A, b, rel)
+            P.set_objective(obj)
+            P.solve()
+        """
         self.__status = "unsolved"
         self.__value = None
         self.__variables = None
