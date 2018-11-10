@@ -22,6 +22,11 @@ class EvalNode(metaclass=abc.ABCMeta):
         """Returns the children of the node."""
         pass
 
+    @abc.abstractmethod
+    def scalar_mul(self, value):
+        """Multiplies the node by a scalar."""
+        pass
+
     @staticmethod
     def propagate_constants(iterable):
         """Propagates constant evaluations but keeps symbolic nodes intact."""
@@ -60,11 +65,18 @@ class LiteralNode(EvalNode):
             return "-"
         return ""
 
+    def scalar_mul(self, value):
+        self.value *= value
+        if self.value < 0:
+            self.negated = True
+        else:
+            self.negated = False
+
     def get_children(self):
         return [self]
 
     def __str__(self):
-        return str(self.value)
+        return f"{float(self.value)}"
 
 
 class SymbolicNode(EvalNode):
@@ -72,6 +84,7 @@ class SymbolicNode(EvalNode):
     def __init__(self, value):
         """Takes `value` as the symbolic value contained in the node."""
         self.negated = value.startswith("-")
+        self.factor = 1.0
         if self.negated:
             self.value = value[1:]
         else:
@@ -89,6 +102,11 @@ class SymbolicNode(EvalNode):
     def get_symbol(self):
         return self.value
 
+    def scalar_mul(self, value):
+        if value < 0:
+            self.negated = True
+        self.factor *= abs(value)
+
     def get_sign(self):
         """Returns the sign of the node."""
         if self.negated:
@@ -99,7 +117,7 @@ class SymbolicNode(EvalNode):
         result = ""
         if self.negated:
             result += "-"
-        result += f"{float(1)}{self.value}"
+        result += f"{self.factor}{self.value}"
         return result
 
 
@@ -107,90 +125,33 @@ class NaryPlus(EvalNode):
     """A n-ary plus operation between several nodes."""
     def __init__(self, *nodes):
         self.children = nodes
+        self.factor = 1.0
 
     def evaluate(self):
         constant, nodes = EvalNode.propagate_constants(self.children)
+        for node in nodes:
+            node.scalar_mul(self.factor)
+        constant *= self.factor
         return NaryPlus(LiteralNode(constant), *nodes)
 
     def negate(self):
         for child in self.children:
             child.negate()
 
+    def scalar_mul(self, value):
+        self.factor *= value
+
     def get_children(self):
         return self.children
 
     def __str__(self):
-        return " + ".join([str(child) for child in self.children])
+        result = " + ".join([str(child) for child in self.children])
+        if self.factor != 1.0:
+            result = f"{self.factor}({result})"
+        return result
 
     def __iter__(self):
         return iter(self.children)
-
-
-class FactorNode(EvalNode):
-    """A node multiplied by a given factor"""
-    def __init__(self, node, k):
-        self.node = node
-        self.k = k
-
-    def evaluate(self):
-        evaluated = self.node.evaluate()
-        # flatten nested factor node
-        if type(evaluated) is FactorNode:
-            return FactorNode(evaluated.node, evaluated.k * self.k).evaluate()
-        # distribute factor nodes inside plus nodes
-        elif type(evaluated) is NaryPlus:
-            return NaryPlus(*list(map(
-                lambda n: FactorNode(n, self.k).evaluate(),
-                evaluated)))
-        # evaluate constant multiplication
-        elif type(evaluated) is LiteralNode:
-            return LiteralNode(self.k * evaluated.value)
-        else:
-            return self
-
-    def get_children(self):
-        return [self]
-
-    def negate(self):
-        self.k = -self.k
-
-    def __str__(self):
-        if type(self.node) is SymbolicNode:
-            return f"{self.node.get_sign()}{float(self.k)}" +\
-                   f"{str(self.node.get_symbol())}"
-        else:
-            return f"{float(self.k)}({str(self.node)})"
-
-
-class ConstraintNode(metaclass=abc.ABCMeta):
-    """Abstract base class for constraint nodes"""
-    def __init__(self, node, evalnode):
-        self.node = node
-        self.k = k
-
-    def evaluate(self):
-        # flatten nested factor node
-        if type(self.node) is FactorNode:
-            return FactorNode(self.node.node, self.node.k * self.k).evaluate()
-        # distribute factor nodes inside plus nodes
-        elif type(self.node) is NaryPlus:
-            return NaryPlus(*list(map(
-                lambda n: FactorNode(n, self.k).evaluate(),
-                self.node))).evaluate()
-        # evaluate constant multiplication
-        elif type(self.node) is LiteralNode:
-            return LiteralNode(self.k * self.node.evaluate())
-        else:
-            return self
-
-    def get_children(self):
-        return [self]
-
-    def negate(self):
-        self.k = -self.k
-
-    def __str__(self):
-        return f"({str(self.node)}) * {str(self.k)}"
 
 
 class ConstraintNode(metaclass=abc.ABCMeta):
@@ -210,7 +171,7 @@ class ConstraintNode(metaclass=abc.ABCMeta):
         for node in lhs_nodes:
             node.negate()
         symbols = NaryPlus(*rhs_nodes, *lhs_nodes)
-        return f"{str(symbols)} {operator} {constant}"
+        return f"{str(symbols)} {operator} {LiteralNode(constant)}"
 
 
 class EqualityConstraint(ConstraintNode):
