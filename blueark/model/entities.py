@@ -18,6 +18,9 @@ class Entity:
         self.parents = set()
         self.my_symbol = SymbolicNode(SymbolGenerator.gen())
 
+    def get_symbol(self):
+        return deepcopy(self.my_symbol)
+
     @abc.abstractmethod
     def demand_equations(self):
         """The demand carried by this node as an EvalNode instance"""
@@ -32,7 +35,7 @@ class Entity:
         if parent_symbol is not None:
             self.parents.add(parent_symbol)
         for child in self.children:
-            child.propagate_symbols_downstream(self.my_symbol)
+            child.propagate_symbols_downstream(self.get_symbol())
 
 
 class Tank(Entity):
@@ -59,10 +62,10 @@ class Tank(Entity):
         # level constraint
         child_sum = deepcopy(child_sum)
         child_sum.scalar_mul(2)
-        constraint_res += [EqualityConstraint(self.my_symbol, child_sum)]
+        constraint_res += [EqualityConstraint(self.get_symbol(), child_sum)]
         # capacity constraint
         capacity = LiteralNode(self.capacity)
-        constraint_res += [GreaterThanConstraint(capacity, self.my_symbol)]
+        constraint_res += [GreaterThanConstraint(capacity, self.get_symbol())]
 
         return constraint_res, maximizer_res
 
@@ -96,11 +99,11 @@ class Pipe(Entity):
         constraint_res += [EqualityConstraint(child_sum, parent_sum)]
         # contraint capacity
         lhs = LiteralNode(self.max_throughput)
-        constraint_res += [GreaterThanConstraint(lhs, self.my_symbol)]
+        constraint_res += [GreaterThanConstraint(lhs, self.get_symbol())]
 
         # add generator power maximizer
         if self.efficiency != 0:
-            node = deepcopy(self.my_symbol)
+            node = deepcopy(self.get_symbol())
             node.scalar_mul(self.efficiency)
             maximizer_res += [node]
 
@@ -126,10 +129,10 @@ class Source(Entity):
             constraint_res += constraints
             maximizer_res += maximizers
         child_sum = NaryPlus(*[child.my_symbol for child in self.children])
+        constraint_res += [EqualityConstraint(self.get_symbol(), child_sum)]
         if self.throughput is not None:
             constraint_res += [EqualityConstraint(
-                self.my_symbol, LiteralNode(self.throughput))]
-        constraint_res += [EqualityConstraint(self.my_symbol, child_sum)]
+                self.get_symbol(), LiteralNode(self.throughput))]
 
         return constraint_res, maximizer_res
 
@@ -146,7 +149,7 @@ class Consumer(Entity):
     def demand_equations(self):
         rhs = LiteralNode(self.demand)
         parent_sum = NaryPlus(*self.parents)
-        constraint_res = [EqualityConstraint(self.my_symbol, parent_sum)]
-        constraint_res += [EqualityConstraint(rhs, self.my_symbol)]
+        constraint_res = [EqualityConstraint(self.get_symbol(), parent_sum)]
+        constraint_res += [EqualityConstraint(rhs, self.get_symbol())]
 
         return constraint_res, []

@@ -1,21 +1,16 @@
 #!/usr/bin/env python3 -O
 
-from blueark.equations import *
-from blueark.model.entities import *
+from blueark.model.sample_model import Model
 
 
 def return_something():
-    SymbolGenerator.reset()
-    consumer = Consumer(50)
-    left = Pipe([consumer], 100, 0)
-    right = Pipe([consumer], 100, 0)
-    tank = Tank([left, right], 1000)
-    tank_to_source = Pipe([tank], 100, 0)
-    src = Source(tank_to_source)
-    src.propagate_symbols_downstream()
-    constraints, maximisers = src.demand_equations()
-    for constraint in set(constraints):
-        print(str(constraint))
+    model = Model()
+    model.set_consumer_usage(150, 150, 150, 150, 150, 150)
+    constraints, maximisers = model.gen_constraints()
+    for constraint in constraints:
+        print(constraint)
+    for maximiser in maximisers:
+        print(maximiser)
 
 
 if __name__ == "__main__":
