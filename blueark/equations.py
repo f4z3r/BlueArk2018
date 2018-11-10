@@ -15,7 +15,7 @@ class SymbolGenerator:
 
     @classmethod
     def reset(cls):
-        cls._idy = -1
+        cls._idx = -1
 
 
 class EvalNode(metaclass=abc.ABCMeta):
@@ -114,7 +114,7 @@ class SymbolicNode(EvalNode):
             self.value = value
 
     def evaluate(self):
-        return self.value
+        return self
 
     def negate(self):
         self.factor = -self.factor

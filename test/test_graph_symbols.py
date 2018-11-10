@@ -14,7 +14,7 @@ class TestGraphSymbols(unittest.TestCase):
         consumer = Consumer(50)
         src = Source(consumer, 100, False)
         src.propagate_symbols_downstream()
-        self.assertEqual(consumer.parents, {SymbolicNode("x_6")})
+        self.assertEqual(consumer.parents, {SymbolicNode("x_1")})
 
     def test_source_tank_consumer(self):
         SymbolGenerator.reset()
@@ -25,4 +25,4 @@ class TestGraphSymbols(unittest.TestCase):
         tank_to_source = Pipe([tank], 100, 0, 100)
         src = Source(tank_to_source, 60, True)
         src.propagate_symbols_downstream()
-        self.assertEqual(consumer.parents, {SymbolicNode("x_8"), SymbolicNode("x_9")})
+        self.assertEqual(consumer.parents, {SymbolicNode("x_1"), SymbolicNode("x_2")})
