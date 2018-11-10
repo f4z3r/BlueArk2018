@@ -49,13 +49,13 @@ class Simulator:
         for step in range(self.n_steps):
             current_consumption = self._consumation_on_day(step)
 
-            all_constr_equ = list(current_consumption.values())
-            model.set_consumer_usage(*all_constr_equ)
+            model.set_consumer_usage(*list(current_consumption.values()))
+
             constr_equations, turbine_list = model.gen_constraints()
 
             constrains, bounds = self.filter_equations(constr_equations)
 
-            all_var_names = equ_parse.get_all_coefficients(all_constr_equ)
+            all_var_names = equ_parse.get_all_coefficients(constr_equations)
             turbine_dict = Simulator.create_turbine_dict(turbine_list,
                                                          all_var_names)
 
@@ -67,8 +67,10 @@ class Simulator:
                                                      MATRIX_FILE_NAME))
 
             bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_var_names)
+
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
-                                        os.path.join(DATA_DIR, BOUNDS_FILE_NAME))
+                                        os.path.join(DATA_DIR, BOUNDS_FILE_NAME),
+                                        len(constrains))
 
             cpp_out = cpp_wrapper.call_cpp_optimizer(CPP_EXE_FILE_PATH,
                                                      BOUNDS_FILE_NAME,

@@ -23,8 +23,8 @@ class DataAugmenter:
 class Consumer:
 
     def __init__(self):
-        self.MAX_CONSUMPTION = 300
-        self.MIN_CONSUMPTION = 100
+        self.MAX_CONSUMPTION = 100
+        self.MIN_CONSUMPTION = 10
 
     def create_consumption_data(self, n_days):
         """Creates water consumption per day."""

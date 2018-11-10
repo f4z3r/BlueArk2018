@@ -86,7 +86,7 @@ def build_matrix(equations):
     return matrix, rhs_vector, equality_type_vector, sorted_coeff_names
 
 
-def write_bounds_file(bounds_equ_dict, turbine_params, file_path):
+def write_bounds_file(bounds_equ_dict, turbine_params, file_path, n_equ):
     """Writes the parameter bounds to file.
 
     Format
@@ -100,7 +100,8 @@ def write_bounds_file(bounds_equ_dict, turbine_params, file_path):
 
     assert len(turbine_params) == len(bounds_equ_dict.keys())
     with open(file_path, 'w') as outfile:
-        idx = 0
+
+        outfile.write(str(len(turbine_params)) + ' ' + str(n_equ) + "\n")
 
         all_names = bounds_equ_dict.keys()
 
