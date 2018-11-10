@@ -66,6 +66,7 @@ class Simulator:
                                         os.path.join(DATA_DIR,
                                                      MATRIX_FILE_NAME))
 
+<<<<<<< HEAD
             bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_var_names)
 
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
@@ -79,6 +80,17 @@ class Simulator:
 
             self.system_state.update(cpp_out, current_consumption,
                                      all_var_names)
+=======
+            bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_coefficients)
+            equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
+                                        os.path.join(DATA_DIR, BOUNDS_FILE_NAME))
+
+            cpp_out = cpp_wrapper.call_cpp_optimizer(CPP_EXE_FILE_PATH,
+                                                      BOUNDS_FILE_NAME,
+                                                      MATRIX_FILE_NAME,
+                                                      DATA_DIR)
+
+            self.system_state.update(cpp_out, current_consumption)
 
     def _consumation_on_day(self, step):
         return {name: cons[step] for name, cons in self.consumer_data.items()}
@@ -126,7 +138,6 @@ class Simulator:
         for name in all_coefficients:
             if name not in upper_bound_dict:
                 upper_bound_dict[name] = -1.0
-
         return upper_bound_dict
 
     @staticmethod
@@ -143,7 +154,6 @@ class Simulator:
 
     def update_outfile(self, parsed_cpp_out, current_consumption, all_names):
         title_names = all_names + 'object_value'
-
 
 
 class SystemState:
@@ -174,12 +184,13 @@ class SystemState:
         self.current_consumation = current_consumption
 
 
+    def parse_cpp_out(self, cpp_out):
+        objective_value = cpp_out[0]
 
-
-
-
-
-
+        variables = {}
+        for line in cpp_out[1:]:
+            var_name, value = line.split(',')
+            variables[var_name] = value
 
     def append_state_to_file(self):
         raise NotImplementedError
