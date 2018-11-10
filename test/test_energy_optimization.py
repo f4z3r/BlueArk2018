@@ -12,32 +12,6 @@ from blueark.optmization.ScipyMinimizer import ScipySolver
 
 class TestOptimizer(unittest.TestCase):
 
-    def test_pico_optimization(self):
-        """Performs a test on a simple predictible network."""
-
-        matrix = [[1.0, 1.0, 0.0, 0.0],
-                  [0.0, -1.0, 1.0, 0.0],
-                  [1.0, 0.0, 1.0, -1.0],
-                  [1.0, 0.0, 1.0, -1.0],
-                  [0.0, 0.0, 1.0, 0.0]]
-
-        rhs_vector = [100., 50., 0., 80., 100.]
-
-        equalities = [0, 0, 0, 1, 1]
-
-        g_efficieny = 1.0
-        obj_function = [g_efficieny, 0.0, 0.0, 0.0]
-
-        solver = OptimizationProblem(len(matrix[0]),
-                                     matrix,
-                                     rhs_vector,
-                                     equalities,
-                                     obj_function)
-
-        solver.solve()
-
-        self.assertEqual(solver.value, 80)
-
     def test_scipy_optimizer(self):
         """Performs a test on a simple predictible network."""
 
