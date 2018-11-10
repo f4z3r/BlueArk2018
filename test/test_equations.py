@@ -13,6 +13,8 @@ class TestEquations(unittest.TestCase):
         lit2 = LiteralNode(10)
         binaryadd = NaryPlus(lit1, lit2)
         self.assertEqual(str(binaryadd), "5 + 10")
+        fact = FactorNode(binaryadd, 2)
+        self.assertEqual(str(fact), "(5 + 10) * 2")
 
     def test_constant_propagation(self):
         """Evaluate `5 + 10 + 100`"""
@@ -21,6 +23,8 @@ class TestEquations(unittest.TestCase):
         lit3 = LiteralNode(100)
         ternaryadd = NaryPlus(lit1, lit2, lit3)
         self.assertEqual(str(ternaryadd.evaluate()), "115")
+        fact = FactorNode(ternaryadd, 2)
+        self.assertEqual(str(fact.evaluate()), "230")
 
     def test_symbolic_evaluation(self):
         """Evaluate symbolic constant propagated equation
@@ -35,6 +39,8 @@ class TestEquations(unittest.TestCase):
         equation = NaryPlus(binaryadd1, binaryadd2)
         self.assertEqual(str(equation), "x + 10 + y + 15")
         self.assertEqual(str(equation.evaluate()), "25 + x + y")
+        fact = FactorNode(equation, 3)
+        self.assertEqual(str(fact.evaluate()), "75 + (x) * 3 + (y) * 3")
 
     def test_equality_constraint(self):
         """Test constant propagated equality output for constraint

@@ -14,7 +14,7 @@ class Entity:
         self.children = children
 
     @abc.abstractmethod
-    def demand_equation(self):
+    def demand_equations(self):
         """The demand carried by this node as an EvalNode instance"""
         return
 
@@ -47,13 +47,18 @@ class Pipe(Entity):
         self.max_power = max_power
         self.throughput = throughput
 
-    def demand_equation(self):
+    def demand_equations(self):
         if self.max_power != 0:
             k = self.throughput * self.max_power / self.max_throughput
-            # todo FactorNode(self.child, k)
-            pass
+            eqs = []
+            for child in self.children:
+                eqs.extend(list(map(lambda eq: equations.FactorNode(eq, k), child.demand_equations())))
+            return eqs
         else:
-            pass
+            eqs = []
+            for child in self.children:
+                eqs.extend(child.demand_equations())
+            return eqs
 
 
 class Source(Entity):
@@ -78,5 +83,5 @@ class Consumer(Entity):
         Entity.__init__(self, [])
         self.demand = demand
 
-    def demand_equation(self):
-        return equations.LiteralNode(self.demand)
+    def demand_equations(self):
+        return [equations.LiteralNode(self.demand)]

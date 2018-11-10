@@ -97,6 +97,32 @@ class NaryPlus(EvalNode):
         return iter(self.children)
 
 
+class FactorNode(EvalNode):
+    """A node multiplied by a given factor"""
+    def __init__(self, node, k):
+        self.node = node
+        self.k = k
+
+    def evaluate(self):
+        # flatten nested factor node
+        if type(self.node) is FactorNode:
+            return FactorNode(self.node.node, self.node.k * self.k).evaluate()
+        # distribute factor nodes inside plus nodes
+        elif type(self.node) is NaryPlus:
+            return NaryPlus(*list(map(lambda n: FactorNode(n, self.k), self.node)))
+        # evaluate constant multiplication
+        elif type(self.node) is LiteralNode:
+            return LiteralNode(self.k * self.node.evaluate())
+        else:
+            return self
+
+    def negate(self):
+        self.k = -self.k
+
+    def __str__(self):
+        return f"({str(self.node)}) * {str(self.k)}"
+
+
 class ConstraintNode(metaclass=abc.ABCMeta):
     """Abstract base class for constraint nodes"""
     def __init__(self, node, evalnode):
