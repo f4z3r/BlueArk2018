@@ -3,6 +3,7 @@
 from blueark.equations import *
 from blueark.model.entities import *
 
+
 def return_something():
     SymbolGenerator.reset()
     consumer = Consumer(50)
