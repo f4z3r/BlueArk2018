@@ -38,7 +38,7 @@ class Consumer:
                                                avg_daily_demand,
                                                5)
 
-        return consumption, n_days
+        return consumption
 
     @staticmethod
     def bounded_random_walk(length, lower_bound, upper_bound, start, end, std):

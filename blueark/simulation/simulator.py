@@ -2,10 +2,20 @@
 
 It will read initial conditions to set up the system,
 it will receive water consumption data from consumers,
-it will then iterate forward and recalculate the optimal solutions.
+it will then iterate forward and recalculate the optimal solutions,
+it will write the system state to a data file continuously.
 """
 
 import os
+
+import blueark.simulation.optimizationwrapper as cpp_wrapper
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                            '../..'))
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+CPP_EXE_FILE_NAME = 'main'
+BOUNDS_FILE_NAME = 'bounds.dat'
+MATRIX_FILE_NAME = 'matrix.dat'
 
 
 class Simulator:
@@ -23,27 +33,31 @@ class Simulator:
 
     def execute_main_loop(self):
 
-        model = ModelBuilder()
+        # TODO: In creation.s
+        model = None
 
         consumation = self.get_consumation_for_day(0)
         model.build_first_time(consumation)
 
+        model.get_equations()
+
         for day in range(1, self.n_days):
-            raise NotImplementedError
-            system_state = None
+            cpp_out = self.run_optimization()
             consumation = self.get_consumation_for_day(day)
-            model.rebuild(consumation, system_state)
+            model.rebuild(consumation, None)
+
+    def run_optimization(self):
+
+        exe_path = os.path.join(self.data_dir, CPP_EXE_FILE_NAME)
+        cpp_out = cpp_wrapper.call_cpp_optimizer(exe_path, BOUNDS_FILE_NAME,
+                                                 MATRIX_FILE_NAME, DATA_DIR)
+        pass
 
     def update_state(self, iter_output):
         raise NotImplementedError
 
     def get_consumation_for_day(self, day):
         return {name: cons[day] for name, cons in self.consumer_data.items()}
-
-class ModelBuilder:
-
-    def build_first_time(self, day_consumptions):
-        raise NotImplementedError
 
 
 class SystemState:
@@ -76,8 +90,3 @@ class SystemState:
 
     def init_state_file(self):
         raise NotImplementedError
-
-
-
-
-

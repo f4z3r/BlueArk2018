@@ -1,18 +1,16 @@
 import os
 
-import tempfile
+
 import subprocess
 from subprocess import check_output
 
 
 def call_cpp_optimizer(exe_path, bounds_file_name,
                        matrix_file_name, data_dir_path):
+    """Runs a subprocess on the cpp optimizer and gets the """
 
     if not os.path.exists(exe_path):
-        raise IOError('Cpp executable does not exist.')
-    # compile
-
-    # catch error
+        raise IOError('Cpp executable does not exist, needs to be compiled.')
 
     try:
         call_str = ' '.join([exe_path, '<', bounds_file_name,
@@ -35,6 +33,3 @@ def parse_cpp_out(cpp_stdout):
         var_name, flow_val = line.split(',')
 
     return var_flows
-
-def convert_std_output():
-    pass
