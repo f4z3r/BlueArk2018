@@ -64,7 +64,10 @@ def build_matrix(equations):
     rhs_vector = []
     equality_type_vector = []
 
-    sorted_coeff_names = sorted(get_all_coefficients(equations))
+    all_coeffs = get_all_coefficients(equations)
+
+    sorted_coeff_names = sorted(all_coeffs, key=lambda x: int(x[2:]))
+
     coeff_indices = {name: idx for idx, name in enumerate(sorted_coeff_names)}
     n_coefficients = len(sorted_coeff_names)
 
@@ -98,9 +101,15 @@ def write_bounds_file(bounds_equ_dict, turbine_params, file_path):
     assert len(turbine_params) == len(bounds_equ_dict.keys())
     with open(file_path, 'w') as outfile:
         idx = 0
-        for var, value in bounds_equ_dict.items():
-            outfile.write(' '.join(['0', str(value), var, str(turbine_params[idx])]) + '\n')
-            idx += 1
+
+        all_names = bounds_equ_dict.keys()
+
+        sorted_names = sorted(all_names, key=lambda x: int(x[2:]))
+
+        for idx, name in enumerate(sorted_names):
+
+            outfile.write(' '.join(['0', str(bounds_equ_dict[name]), name,
+                                    str(turbine_params[name])]) + '\n')
 
 
 def write_matrix_file(matrix, equ_vec, rhs_vec, file_path):

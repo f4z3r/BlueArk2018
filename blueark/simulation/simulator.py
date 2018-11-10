@@ -10,11 +10,11 @@ import os
 
 import blueark.simulation.optimizationwrapper as cpp_wrapper
 import blueark.equations_parsing as equ_parse
-from blueark.model.sample_model import Model
+from blueark.model.sample_model import Model2
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                            '../..'))
-DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+                                            '..'))
+DATA_DIR = os.path.join(PROJECT_ROOT, '..', 'data')
 CPP_EXE_FILE_NAME = 'main'
 CPP_EXE_FILE_PATH = os.path.join(PROJECT_ROOT,
                                  'optmization',
@@ -22,8 +22,8 @@ CPP_EXE_FILE_PATH = os.path.join(PROJECT_ROOT,
 BOUNDS_FILE_NAME = 'bounds.dat'
 MATRIX_FILE_NAME = 'matrix.dat'
 
-N_ITEMS = 18  # HARDCODED NUMBER OF ITEMS IN OUR TEST NETWORK
-ALL_COEFFICIENTS = {'x_{}'.format(idx) for idx in range(N_ITEMS)}
+OUT_FILE_NAME = 'output.dat'
+
 
 class Simulator:
     def __init__(self, initial_state, consumer_data, n_steps, data_dir):
@@ -36,23 +36,28 @@ class Simulator:
     def _init_data_dir(data_dir):
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
+
+        with open(os.path.join(data_dir, OUT_FILE_NAME), 'w') as outfile:
+            outfile.write('### FINAL DATA OUTPU ###' + '\n')
+
         return data_dir
 
     def execute_main_loop(self):
 
-        model = Model()
+        model = Model2()
 
         for step in range(self.n_steps):
             current_consumption = self._consumation_on_day(step)
 
-            model.set_consumer_usage(*list(current_consumption.values()))
+            all_constr_equ = list(current_consumption.values())
+            model.set_consumer_usage(*all_constr_equ)
             constr_equations, turbine_list = model.gen_constraints()
-
 
             constrains, bounds = self.filter_equations(constr_equations)
 
+            all_var_names = equ_parse.get_all_coefficients(all_constr_equ)
             turbine_dict = Simulator.create_turbine_dict(turbine_list,
-                                                         ALL_COEFFICIENTS)
+                                                         all_var_names)
 
             matrix, rhs_vec, equ_vec, sort_coeffs = \
                 equ_parse.build_matrix(constr_equations)
@@ -61,7 +66,7 @@ class Simulator:
                                         os.path.join(DATA_DIR,
                                                      MATRIX_FILE_NAME))
 
-            bounds_equ_dict = self.create_bounds_equ_dict(bounds, ALL_COEFFICIENTS)
+            bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_var_names)
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
                                         os.path.join(DATA_DIR, BOUNDS_FILE_NAME))
 
@@ -70,7 +75,8 @@ class Simulator:
                                                      MATRIX_FILE_NAME,
                                                      DATA_DIR)
 
-            self.system_state.update(cpp_out, current_consumption)
+            self.system_state.update(cpp_out, current_consumption,
+                                     all_var_names)
 
     def _consumation_on_day(self, step):
         return {name: cons[step] for name, cons in self.consumer_data.items()}
@@ -81,8 +87,8 @@ class Simulator:
         turbine_dict = {}
 
         for item in turbine_list:
-            value, ending_crippled = item.split('x')
-            turbine_dict['x' + ending_crippled] = float(value)
+            value, ending = item.split('*')
+            turbine_dict[ending.strip()] = float(value)
 
         for name in all_coefficients:
             if name not in turbine_dict.keys():
@@ -91,14 +97,28 @@ class Simulator:
         return turbine_dict
 
     @staticmethod
+    def parse_cpp_out(cpp_out):
+        objective_value = cpp_out[0]
+
+        var_value_dict = {}
+        for line in cpp_out[1:]:
+            var_name, value = line.split(',')
+            var_value_dict[var_name] = value
+
+        return objective_value, var_value_dict
+
+    @staticmethod
     def create_bounds_equ_dict(bounds_equ, all_coefficients):
         """From raw list of bounds equations, create a bounds dict."""
 
         upper_bound_dict = {}
 
         for equ in bounds_equ:
-            name = equ.split('=')[0][:-1].strip()
-            upper_bound = equ.split('=')[1].strip()
+            first_part = equ.split('=')[0][:-1].strip()
+            factor = float(first_part.split('*')[0].strip())
+            name = first_part.split('*')[1].strip()
+            upper_bound = float(equ.split('=')[1].strip()) / factor
+
             upper_bound_dict[name] = upper_bound
 
         for name in all_coefficients:
@@ -119,6 +139,10 @@ class Simulator:
                 constraints.append(equ)
         return constraints, bounds
 
+    def update_outfile(self, parsed_cpp_out, current_consumption, all_names):
+        title_names = all_names + 'object_value'
+
+
 
 class SystemState:
 
@@ -137,7 +161,6 @@ class SystemState:
                          drainer_outlet,
                          source_input):
 
-
         self.current_consumation = consumer_consumptions
         self.tank_levels = tank_levels
         self.pipe_through_puts = pipe_throughput
@@ -145,17 +168,13 @@ class SystemState:
         self.source_input = source_input
         self.append_state_to_file()
 
-    def update(self, cpp_out, current_consumption):
+    def update(self, parsed_cpp_out, current_consumption, all_names):
         self.current_consumation = current_consumption
 
 
-    def parse_cpp_out(self, cpp_out):
-        objective_value = cpp_out[0]
 
-        variables = {}
-        for line in cpp_out[1:]:
-            var_name, value = line.split(',')
-            variables[var_name] = value
+
+
 
 
 
