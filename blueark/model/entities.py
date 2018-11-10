@@ -32,17 +32,17 @@ class Tank(Entity):
 
 
 class Pipe(Entity):
-    def __init__(self, parents, max_throughput, max_power, throughput):
+    def __init__(self, parent, max_throughput, max_power, throughput):
         """A pipe route water from one point to another. It can
         generate electricity if it has a generator going through.
         The flow of water flowing through a pipe can be controlled.
 
-        :param parents: upstream nodes in the graph
+        :param parent: single upstream node in the graph
         :param max_throughput: maximum throughput this pipe can support, in liters per second (e.g. 50)
         :param max_power: maximum electric power produced by the generator in kW (e.g. 225 kW)
         :param throughput: volume of water going through this pipe, in liters per second (e.g. 50). Can not be higher than max_throughput.
         """
-        Entity.__init__(self, parents)
+        Entity.__init__(self, [parent])
         self.max_throughput = max_throughput
         self.max_power = max_power
         self.throughput = throughput
