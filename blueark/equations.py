@@ -108,7 +108,8 @@ class ConstraintNode(metaclass=abc.ABCMeta):
         if type(self.node) is LiteralNode:
             bound = LiteralNode(self.node.value - constant)
         else:
-            nodes += [self.node.negate()]
+            self.node.negate()
+            nodes += [self.node]
             bound = LiteralNode(-constant)
         symbols = NaryPlus(*nodes)
         return f"{str(symbols)} {operator} {str(bound)}"
