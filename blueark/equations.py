@@ -68,6 +68,7 @@ class EvalNode(metaclass=abc.ABCMeta):
 
 class LiteralNode(EvalNode):
     """Node containing a numerical value"""
+
     def __init__(self, value):
         """Takes `value` as the numerical value contained in the node."""
         self.value = value
@@ -104,6 +105,7 @@ class LiteralNode(EvalNode):
 
 class SymbolicNode(EvalNode):
     """Node containing a symbolic value"""
+
     def __init__(self, value):
         """Takes `value` as the symbolic value contained in the node."""
         if value.startswith("-"):
@@ -161,9 +163,9 @@ class SymbolicNode(EvalNode):
     def __hash__(self):
         return hash((self.value, self.factor))
 
-
 class NaryPlus(EvalNode):
     """A n-ary plus operation between several nodes."""
+
     def __init__(self, *nodes):
         self.children = list(nodes)
         self.factor = 1.0
@@ -210,6 +212,7 @@ class NaryPlus(EvalNode):
 
 class ConstraintNode(metaclass=abc.ABCMeta):
     """Abstract base class for constraint nodes"""
+
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
@@ -240,6 +243,7 @@ class ConstraintNode(metaclass=abc.ABCMeta):
 
 class EqualityConstraint(ConstraintNode):
     """Constraint node representing equality"""
+
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
         self.operator = "="
@@ -247,6 +251,7 @@ class EqualityConstraint(ConstraintNode):
 
 class GreaterThanConstraint(ConstraintNode):
     """Constraint node representing smaller or equal"""
+
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
         self.operator = "<="
