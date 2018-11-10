@@ -15,11 +15,16 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 using std::cin;
 using std::cout;
 
-int main()
+int main(int argc, char *argv[])
 {
+
+  std::ifstream in_file;
+
+  in_file.open(argv[1]);
+
   int n, m;
 
-  std::cin >> n >> m;
+  in_file >> n >> m;
   std::vector<std::string> names(n);
   Program lp(CGAL::EQUAL, true, 0, false, 0);
   double a, b, c, eq;
@@ -27,7 +32,7 @@ int main()
   for (int var = 0; var < n; ++var)
   {
     // a <= var <= b
-    cin >> a >> b >> names[var] >> c;
+    in_file >> a >> b >> names[var] >> c;
 
     lp.set_c(var, -c);
     if (a > 0)
@@ -40,18 +45,20 @@ int main()
     }
   }
 
-  // each of the following m lines is:
+  in_file.close();
+  // each of t)he following m lines is:
   // a[i][0] ... a[i][n-1] <= b[i]
   // where "<=" is an integer, 0 if equal
 
+  in_file.open(argv[2]);
   for (int constraint = 0; constraint < m; ++constraint)
   {
     for (int variable = 0; variable < n; ++variable)
     {
-      cin >> a;
+      in_file >> a;
       lp.set_a(variable, constraint, a);
     }
-    cin >> eq >> b;
+    in_file >> eq >> b;
     lp.set_b(constraint, b);
     if (eq == 1)
     {
@@ -59,8 +66,9 @@ int main()
     }
   }
 
+  in_file.close();
   std::ofstream file;
-  file.open("output.txt", std::ofstream::out | std::ofstream::app);
+  file.open(argv[3], std::ofstream::out | std::ofstream::trunc);
 
   Solution s = CGAL::solve_linear_program(lp, ET());
   if (!s.solves_linear_program(lp) || s.status() == CGAL::QP_INFEASIBLE)
