@@ -5,6 +5,19 @@
 import abc
 
 
+class SymbolGenerator:
+    _idx = -1
+
+    @classmethod
+    def gen(cls):
+        cls._idx += 1
+        return f"x_{cls._idx}"
+
+    @classmethod
+    def reset(cls):
+        cls._idx = -1
+
+
 class EvalNode(metaclass=abc.ABCMeta):
     """Abstract base class for nodes that can be computationally evaluated."""
     @abc.abstractmethod
@@ -44,6 +57,14 @@ class EvalNode(metaclass=abc.ABCMeta):
 
         return constant, nodes
 
+    @abc.abstractmethod
+    def __hash__(self):
+        pass
+
+    @abc.abstractmethod
+    def __eq__(self, other):
+        pass
+
 
 class LiteralNode(EvalNode):
     """Node containing a numerical value"""
@@ -55,7 +76,7 @@ class LiteralNode(EvalNode):
         return self
 
     def negate(self):
-        self.value = -self.value
+        return LiteralNode(-self.value)
 
     def get_sign(self):
         """Returns the sign of the node."""
@@ -72,6 +93,14 @@ class LiteralNode(EvalNode):
     def __str__(self):
         return f"{float(self.value)}"
 
+    def __eq__(self, other):
+        if type(other) is LiteralNode:
+            return self.value == other.value
+        return False
+
+    def __hash__(self):
+        return hash(self.value)
+
 
 class SymbolicNode(EvalNode):
     """Node containing a symbolic value"""
@@ -85,10 +114,12 @@ class SymbolicNode(EvalNode):
             self.value = value
 
     def evaluate(self):
-        return self.value
+        return self
 
     def negate(self):
-        self.factor = -self.factor
+        node = SymbolicNode(self.value)
+        node.scalar_mul(-self.factor)
+        return node
 
     def get_children(self):
         return [self]
@@ -122,12 +153,19 @@ class SymbolicNode(EvalNode):
     def __str__(self):
         return f"{self.factor}{self.value}"
 
+    def __eq__(self, other):
+        if type(other) is SymbolicNode:
+            return self.value == other.value and self.factor == other.factor
+        return False
+
+    def __hash__(self):
+        return hash((self.value, self.factor))
 
 
 class NaryPlus(EvalNode):
     """A n-ary plus operation between several nodes."""
     def __init__(self, *nodes):
-        self.children = nodes
+        self.children = list(nodes)
         self.factor = 1.0
 
     def evaluate(self):
@@ -142,8 +180,7 @@ class NaryPlus(EvalNode):
         return NaryPlus(*result)
 
     def negate(self):
-        for child in self.children:
-            child.negate()
+        return NaryPlus(*[child.negate() for child in self.children])
 
     def scalar_mul(self, value):
         self.factor *= value
@@ -160,40 +197,56 @@ class NaryPlus(EvalNode):
     def __iter__(self):
         return iter(self.children)
 
+    def __eq__(self, other):
+        if type(other) is NaryPlus:
+            return set(self.evaluate().children) == \
+                   set(other.evaluate().children)
+        return False
+
+    def __hash__(self):
+        evaluated = self.evaluate()
+        return hash(tuple(set(self.children)))
+
 
 class ConstraintNode(metaclass=abc.ABCMeta):
     """Abstract base class for constraint nodes"""
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
+        self.operator = None
+        self._evaluate()
 
-    def _get_string(self, operator):
-        """Gets the string based on the operator. This already simplifies the
-        entire constraint."""
+    def _evaluate(self):
+        """Simplifies the constraint as much as possible."""
         lhs_constant, lhs_nodes = EvalNode.propagate_constants(
-            self.lhs.get_children())
+            self.lhs.evaluate().get_children())
         rhs_constant, rhs_nodes = EvalNode.propagate_constants(
-            self.rhs.get_children())
+            self.rhs.evaluate().get_children())
         constant = lhs_constant - rhs_constant
-        for node in lhs_nodes:
-            node.negate()
-        symbols = NaryPlus(*rhs_nodes, *lhs_nodes)
-        return f"{str(symbols)} {operator} {LiteralNode(constant)}"
+        lhs_nodes = [node.negate() for node in lhs_nodes]
+        symbols = NaryPlus(*rhs_nodes, *lhs_nodes).evaluate()
+        self.lhs = symbols
+        self.rhs = LiteralNode(constant)
+
+    def __hash__(self):
+        return hash((hash(self.lhs), self.operator, self.rhs))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __str__(self):
+        return f"{self.lhs} {self.operator} {self.rhs}"
 
 
 class EqualityConstraint(ConstraintNode):
     """Constraint node representing equality"""
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
-
-    def __str__(self):
-        return self._get_string("=")
+        self.operator = "="
 
 
 class GreaterThanConstraint(ConstraintNode):
     """Constraint node representing smaller or equal"""
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs)
-
-    def __str__(self):
-        return self._get_string("<=")
+        self.operator = "<="
