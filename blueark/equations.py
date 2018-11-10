@@ -76,7 +76,7 @@ class LiteralNode(EvalNode):
         return self
 
     def negate(self):
-        self.value = -self.value
+        return LiteralNode(-self.value)
 
     def get_sign(self):
         """Returns the sign of the node."""
@@ -117,7 +117,9 @@ class SymbolicNode(EvalNode):
         return self
 
     def negate(self):
-        self.factor = -self.factor
+        node = SymbolicNode(self.value)
+        node.scalar_mul(-self.factor)
+        return node
 
     def get_children(self):
         return [self]
@@ -178,8 +180,7 @@ class NaryPlus(EvalNode):
         return NaryPlus(*result)
 
     def negate(self):
-        for child in self.children:
-            child.negate()
+        return NaryPlus(*[child.negate() for child in self.children])
 
     def scalar_mul(self, value):
         self.factor *= value
@@ -222,8 +223,7 @@ class ConstraintNode(metaclass=abc.ABCMeta):
         rhs_constant, rhs_nodes = EvalNode.propagate_constants(
             self.rhs.get_children())
         constant = lhs_constant - rhs_constant
-        for node in lhs_nodes:
-            node.negate()
+        lhs_nodes = [node.negate() for node in lhs_nodes]
         symbols = NaryPlus(*rhs_nodes, *lhs_nodes).evaluate()
         self.lhs = symbols
         self.rhs = LiteralNode(constant)
