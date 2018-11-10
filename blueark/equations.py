@@ -13,6 +13,10 @@ class SymbolGenerator:
         cls._idx += 1
         return f"x_{cls._idx}"
 
+    @classmethod
+    def reset(cls):
+        cls._idy = -1
+
 
 class EvalNode(metaclass=abc.ABCMeta):
     """Abstract base class for nodes that can be computationally evaluated."""
