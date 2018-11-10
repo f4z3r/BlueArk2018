@@ -35,6 +35,7 @@ class Entity:
             child.propagate_symbols_downstream(self.my_symbol)
 
 
+
 class Tank(Entity):
     def __init__(self, children, capacity):
         """A tank stores water

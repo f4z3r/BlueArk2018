@@ -18,5 +18,9 @@ def return_something():
         print(str(constraint))
 
 
+def main():
+    pass
+
+
 if __name__ == "__main__":
     return_something()
