@@ -26,7 +26,8 @@ class OptimizationProblem:
         """Wrapper class for picos optimization.
 
         P = Problem(n=0, A=[], b=[], rel=[], obj=[])
-        if all parameters are set under construction, one can call solve directly.
+        if all parameters are set under construction,
+            one can call solve directly.
         Otherwise, one must do:
             P = Problem()
             P.add_variables(n)
@@ -108,8 +109,12 @@ class OptimizationProblem:
 
         # add lists of constraints
 
-        self.pic_problem.add_list_of_constraints([matrix[int(idx), :] * self.variables == rhs_vector[int(idx)] for idx in equality_idx])
-        self.pic_problem.add_list_of_constraints([matrix[int(idx), :] * self.variables < rhs_vector[int(idx)] for idx in inequality_idx])
+        self.pic_problem.add_list_of_constraints(
+            [matrix[int(idx), :] * self.variables == rhs_vector[int(idx)]
+                for idx in equality_idx])
+        self.pic_problem.add_list_of_constraints(
+            [matrix[int(idx), :] * self.variables < rhs_vector[int(idx)]
+                for idx in inequality_idx])
 
         self.matrix = matrix[:]
 
@@ -133,6 +138,7 @@ class OptimizationProblem:
                                  type(coeff_idx))
 
         self.objective_function = cvx.matrix(coeff_indices)
+
 
 """
 P = OptimizationProblem(2)

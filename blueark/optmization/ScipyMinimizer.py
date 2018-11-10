@@ -30,12 +30,14 @@ class ScipySolver:
         return LinearConstraint(self.matrix, lower_bound, upper_bound)
 
     @staticmethod
-    def linear_constraints_dict(flow_values, turbine_params, matrix, rhs_vec, equ_vec):
+    def linear_constraints_dict(flow_values, turbine_params, matrix, rhs_vec,
+                                equ_vec):
         """Deprecated."""
         constraints = []
         for mat_row, equ_val in zip(matrix, equ_vec):
             constraint = 0.0
-            for turb_value, flow_value, rhs_val in zip(turbine_params, flow_values, rhs_vec):
+            for turb_value, flow_value, rhs_val in \
+                    zip(turbine_params, flow_values, rhs_vec):
                 constraint += turb_value * flow_value - rhs_val
 
             if equ_val == 0:
@@ -52,7 +54,8 @@ class ScipySolver:
     def init_constraint_list(self):
         """Returns a list of dicts representing constraints."""
         constraints = []
-        for row, equ_val, rhs_val in zip(self.matrix, self.equ_vec, self.rhs_vec):
+        for row, equ_val, rhs_val in \
+                zip(self.matrix, self.equ_vec, self.rhs_vec):
 
             constraints.append({'type': self.get_eq_type(equ_val),
                                 'fun': lambda x: rhs_val - np.dot(row, x)})
