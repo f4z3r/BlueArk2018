@@ -47,5 +47,5 @@ class TestEquations(unittest.TestCase):
         lit2 = LiteralNode(15)
         binaryadd2 = NaryPlus(sym2, lit2)
         equation = NaryPlus(binaryadd1, binaryadd2)
-        constraint = EqualityConstraint(100, equation)
-        self.assertEqual(str(constraint), "100 == 25 + x + y")
+        constraint = EqualityConstraint(LiteralNode(100), equation)
+        self.assertEqual(str(constraint), "x + y = 75")
