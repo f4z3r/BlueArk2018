@@ -88,16 +88,21 @@ class Problem():
             raise ValueError('Dimensions do not match or are zero. A: %ix%i. b: %i. rel: %i' % (
                 m, n, len(b), len(rel)))
 
+        b = cvx.matrix(b)
+        rel = np.array(rel)
+
+        # get indices of ineqs and eqs
+        ineq = np.where(rel)[0]
+        rel[ineq] = 1
+        eq = np.where(1 - rel)[0]
+
+        # add lists of constraints
+        self.prob.add_list_of_constraints(
+            [A[int(i), :] * self.X == b[int(i)] for i in eq])
+        self.prob.add_list_of_constraints(
+            [A[int(i), :] * self.X < b[int(i)] for i in ineq])
+
         self.A = A[:]
-        for i in range(m):
-            # m constraints
-            a = A[i, :]
-            if rel[i] < 0:
-                self.prob.add_constraint(a * self.X < b[i])
-            elif rel[i] > 0:
-                self.prob.add_constraint(a * self.X > b[i])
-            else:
-                self.prob.add_constraint(a * self.X == b[i])
 
     def solve(self, verbose=0):
         objective = self.obj.T * self.X
@@ -120,14 +125,16 @@ class Problem():
 
 P = Problem(2)
 A = [
-    [1, -1],
+    [-1, 1],
     [1, 0],
     [1, 1]
+
+
 ]
 
 A = np.array(A)
 b = [0, 3, 4]
-rel = [1, -1, -1]
+rel = [1, 1, 1]
 
 P.add_constraints(A, b, rel)
 c = [0.5, 1]
