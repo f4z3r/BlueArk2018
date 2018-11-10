@@ -34,8 +34,9 @@ class EvalNode(metaclass=abc.ABCMeta):
                 nodes += sub_nodes
             elif type(node) is LiteralNode:
                 constant += node.value
-            elif type(node) is SymbolicNode:
+            else:
                 nodes += [node]
+
         return constant, nodes
 
 
@@ -122,12 +123,15 @@ class FactorNode(EvalNode):
             return FactorNode(self.node.node, self.node.k * self.k).evaluate()
         # distribute factor nodes inside plus nodes
         elif type(self.node) is NaryPlus:
-            return NaryPlus(*list(map(lambda n: FactorNode(n, self.k), self.node)))
+            return NaryPlus(*list(map(lambda n: FactorNode(n, self.k).evaluate(), self.node))).evaluate()
         # evaluate constant multiplication
         elif type(self.node) is LiteralNode:
             return LiteralNode(self.k * self.node.evaluate())
         else:
             return self
+
+    def get_children(self):
+        return [self]
 
     def negate(self):
         self.k = -self.k
