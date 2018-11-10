@@ -1,4 +1,10 @@
+import blueark.equations as equations
+import abc
+
+
 class Entity:
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, parents):
         """An entity is a node in the graph, it is connected
         to several upstream parent entities, it has a symbolic
@@ -7,6 +13,10 @@ class Entity:
         """
         self.parents = parents
 
+    @abc.abstractmethod
+    def demand_equation(self):
+        """The demand carried by this node as an EvalNode instance"""
+        return
 
 class Tank(Entity):
     def __init__(self, parents, capacity, load):
@@ -60,3 +70,5 @@ class Consumer(Entity):
         Entity.__init__(self, parents)
         self.demand = demand
 
+    def demand_equation(self):
+        return equations.LiteralNode(self.demand)
