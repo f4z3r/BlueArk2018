@@ -97,7 +97,7 @@ class TestEquationParsing(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdirpath:
             file_path = os.path.join(tmpdirpath, 'matrix.dat')
             write_matrix_file(matrix, equ_vec, rhs_vec, file_path)
-            
+
             pass
 
 
