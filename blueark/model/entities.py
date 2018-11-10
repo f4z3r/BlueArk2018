@@ -72,7 +72,7 @@ class Tank(Entity):
 
 
 class Pipe(Entity):
-    def __init__(self, children, max_throughput, efficiency):
+    def __init__(self, children, max_throughput, efficiency=0):
         """A pipe route water from one point to another. It can
         generate electricity if it has a generator going through.
         The flow of water flowing through a pipe can be controlled.
