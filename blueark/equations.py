@@ -12,6 +12,16 @@ class EvalNode(metaclass=abc.ABCMeta):
         """Evaluates the node"""
         pass
 
+    @abc.abstractmethod
+    def negate(self):
+        """Negates the node"""
+        pass
+
+    @abc.abstractmethod
+    def absolute(self):
+        """Returns the absolute value of the node."""
+        pass
+
     @staticmethod
     def propagate_constants(iterable):
         """Propagates constant evaluations but keeps symbolic nodes intact."""
@@ -34,9 +44,17 @@ class LiteralNode(EvalNode):
     def __init__(self, value):
         """Takes `value` as the numerical value contained in the node."""
         self.value = value
+        self.negated = value < 0
 
     def evaluate(self):
         return self.value
+
+    def negate(self):
+        self.negated = not self.negated
+        self.value = -self.value
+
+    def absolute(self):
+        return abs(self.value)
 
     def __str__(self):
         return str(self.value)
@@ -47,12 +65,23 @@ class SymbolicNode(EvalNode):
     def __init__(self, value):
         """Takes `value` as the symbolic value contained in the node."""
         self.value = value
+        self.negated = value.startswith("-")
 
     def evaluate(self):
         return self.value
 
-    def __str__(self):
+    def negate(self):
+        self.negated = not self.negated
+
+    def absolute(self):
         return self.value
+
+    def __str__(self):
+        result = ""
+        if self.negated:
+            result += "-"
+        result += self.value
+        return result
 
 
 class NaryPlus(EvalNode):
@@ -64,6 +93,14 @@ class NaryPlus(EvalNode):
         constant, nodes = EvalNode.propagate_constants(self.children)
         return NaryPlus(LiteralNode(constant), *nodes)
 
+    def negate(self):
+        for child in self.children:
+            child.negate()
+
+    def absolute(self):
+        for child in self.children:
+            child.absolute
+
     def __str__(self):
         return " + ".join([str(child) for child in self.children])
 
@@ -73,33 +110,43 @@ class NaryPlus(EvalNode):
 
 class ConstraintNode(metaclass=abc.ABCMeta):
     """Abstract base class for constraint nodes"""
-    def __init__(self, value, evalnode):
-        self.value = value
+    def __init__(self, node, evalnode):
+        self.node = node
         self.evalnode = evalnode
+
+    def _get_string(self, operator):
+        constant, nodes = EvalNode.propagate_constants(self.evalnode.children)
+        if type(self.node) is LiteralNode:
+            bound = LiteralNode(self.node.value - constant)
+        else:
+            nodes += [self.node.negate()]
+            bound = LiteralNode(-constant)
+        symbols = NaryPlus(*nodes)
+        return f"{str(symbols)} {operator} {str(bound)}"
 
 
 class EqualityConstraint(ConstraintNode):
     """Constraint node representing equality"""
-    def __init__(self, value, evalnode):
-        super().__init__(value, evalnode)
+    def __init__(self, node, evalnode):
+        super().__init__(node, evalnode)
 
     def __str__(self):
-        return f"{self.value} == {str(self.evalnode.evaluate())}"
+        return self._get_string("=")
 
 
 class LessThanConstraint(ConstraintNode):
     """Constraint node representing larger or equal"""
-    def __init__(self, value, evalnode):
-        super().__init__(value, evalnode)
+    def __init__(self, node, evalnode):
+        super().__init__(node, evalnode)
 
     def __str__(self):
-        return f"{self.value} <= {str(self.evalnode.evaluate())}"
+        return self._get_string(">=")
 
 
 class GreaterThanConstraint(ConstraintNode):
     """Constraint node representing smaller or equal"""
-    def __init__(self, value, evalnode):
-        super().__init__(value, evalnode)
+    def __init__(self, node, evalnode):
+        super().__init__(node, evalnode)
 
     def __str__(self):
-        return f"{self.value} >= {str(self.evalnode.evaluate())}"
+        return self._get_string("<=")
