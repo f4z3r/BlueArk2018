@@ -20,7 +20,7 @@ import numpy as np
 # print(P.obj_value())
 
 
-class OptimizationProblem():
+class OptimizationProblem:
     def __init__(self, num_variables=0, matrix=[], rhs_vector=[],
                  equality_vector=[], objective_function=[]):
         """Wrapper class for picos optimization.
