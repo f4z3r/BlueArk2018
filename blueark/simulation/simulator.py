@@ -47,14 +47,15 @@ class Simulator:
         os.mkdir(run_dir_path)
 
         with open(os.path.join(run_dir_path, VAR_FILE_NAME), 'w') as outfile:
-            outfile.write('# VARIABLE VALUES #\n')
+            outfile.write('\n')
 
         with open(os.path.join(run_dir_path, OBJ_FILE_NAME), 'w') as outfile:
-            outfile.write('# OBJECTIVE VALUE #\n')
+            outfile.write('\n')
 
         with open(os.path.join(run_dir_path, CONS_FILE_NAME), 'w') as outfile:
-            outfile.write('# CONSUMPTION VALUES #\n')
+            outfile.write('\n')
 
+        print('Running in', run_dir_path)
         return run_dir_path
 
     def execute_main_loop(self):
@@ -191,7 +192,6 @@ def call_cpp_optimizer(exe_path, bounds_file_name,
     if not os.path.isfile(exe_path):
         raise IOError('Cpp executable does not exist, needs to be compiled.')
 
-    print(exe_path)
     call_str = '{} {} {} {}'.format(CPP_EXE_FILE_PATH,
                                     bounds_file_name,
                                     matrix_file_name,
