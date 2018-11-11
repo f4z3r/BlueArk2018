@@ -1,17 +1,15 @@
 import os
 import sys
 
-
-
 from blueark.simulation.data_augmentation import DataAugmenter
 from blueark.simulation.simulator import Simulator
-from blueark.simulation.simulator import SystemState
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, PROJECT_ROOT)
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+
 N_CONSUMERS = 5
-N_TIME_STEPS = 100
+N_TIME_STEPS = 1000
 
 
 def main():
@@ -20,9 +18,7 @@ def main():
 
     all_consumptions = data_maker.generate_consumptions()
 
-    initial_state = SystemState(all_consumptions, 0)
-
-    simulation = Simulator(initial_state, all_consumptions,
+    simulation = Simulator(all_consumptions,
                            N_TIME_STEPS, DATA_DIR)
 
     simulation.execute_main_loop()

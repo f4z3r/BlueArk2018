@@ -8,7 +8,8 @@ it will write the system state to a data file continuously.
 
 import os
 import subprocess
-import shutil
+import datetime
+from collections import OrderedDict
 
 import blueark.equations_parsing as equ_parse
 from blueark.model.sample_model import Model2
@@ -16,38 +17,53 @@ from blueark.model.sample_model import Model2
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             '../../'))
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
+
 CPP_EXE_FILE_NAME = 'main'
 CPP_EXE_FILE_PATH = os.path.join(PROJECT_ROOT,
                                  'blueark/optmization',
                                  CPP_EXE_FILE_NAME)
 BOUNDS_FILE_NAME = 'bounds.dat'
 MATRIX_FILE_NAME = 'matrix.dat'
+CPP_FILE_NAME = 'cpp_out.dat'
 
-OUT_FILE_NAME = 'output.dat'
+VAR_FILE_NAME = 'var_output.dat'
+CONS_FILE_NAME = 'consumptions.dat'
+OBJ_FILE_NAME = 'objective.dat'
 
 
 class Simulator:
-    def __init__(self, initial_state, consumer_data, n_steps, data_dir):
-        self.system_state = initial_state
+    def __init__(self, consumer_data, n_steps, data_dir):
         self.n_steps = n_steps
         self.consumer_data = consumer_data
-        self.data_dir = self._init_data_dir(data_dir)
+        self.run_dir_path = self.init_data_files(data_dir)
 
     @staticmethod
-    def _init_data_dir(data_dir):
+    def init_data_files(data_dir):
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
 
-        with open(os.path.join(data_dir, OUT_FILE_NAME), 'w') as outfile:
-            outfile.write('### FINAL DATA OUTPU ###')
+        run_data_dir = 'run_{}'.format(get_datetime_tag())
+        run_dir_path = os.path.join(data_dir, run_data_dir)
+        os.mkdir(run_dir_path)
 
-        return data_dir
+        with open(os.path.join(run_dir_path, VAR_FILE_NAME), 'w') as outfile:
+            outfile.write('# VARIABLE VALUES #\n')
+
+        with open(os.path.join(run_dir_path, OBJ_FILE_NAME), 'w') as outfile:
+            outfile.write('# OBJECTIVE VALUE #\n')
+
+        with open(os.path.join(run_dir_path, CONS_FILE_NAME), 'w') as outfile:
+            outfile.write('# CONSUMPTION VALUES #\n')
+
+        return run_dir_path
 
     def execute_main_loop(self):
 
         model = Model2()
 
         for step in range(self.n_steps):
+            print('Running step', step, '...')
+
             current_consumption = self._consumation_on_day(step)
 
             model.set_consumer_usage(*list(current_consumption.values()))
@@ -64,21 +80,41 @@ class Simulator:
                 equ_parse.build_matrix(constr_equations)
 
             equ_parse.write_matrix_file(matrix, equ_vec, rhs_vec,
-                                        os.path.join(DATA_DIR,
+                                        os.path.join(self.run_dir_path,
                                                      MATRIX_FILE_NAME))
             all_coefficients = equ_parse.get_all_coefficients(constr_equations)
             bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_coefficients)
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
-                                        os.path.join(DATA_DIR,
+                                        os.path.join(self.run_dir_path,
                                                      BOUNDS_FILE_NAME),
                                         len(constrains))
 
             call_cpp_optimizer(CPP_EXE_FILE_PATH,
                                      BOUNDS_FILE_NAME,
                                      MATRIX_FILE_NAME,
-                                     DATA_DIR)
+                                     self.run_dir_path,
+                                     CPP_FILE_NAME)
 
-            # self.system_state.update(cpp_out, current_consumption)
+            var_val_dict, object_val = self.parse_cpp_out(self.run_dir_path,
+                                                          CPP_FILE_NAME)
+
+            self.update_outfile(current_consumption, var_val_dict, object_val)
+
+    @staticmethod
+    def parse_cpp_out(data_dir, cpp_file_name):
+        lines = []
+        with open(os.path.join(data_dir, cpp_file_name), 'r') as infile:
+            for line in infile:
+                lines.append(line)
+
+        objec_value = float(lines[0])
+
+        var_val_dict = OrderedDict()
+        for item in lines[1:]:
+            var_name, value = item.split(',')
+            var_val_dict[var_name] = float(value)
+
+        return var_val_dict, objec_value
 
     def _consumation_on_day(self, step):
         return {name: cons[step] for name, cons in self.consumer_data.items()}
@@ -97,17 +133,6 @@ class Simulator:
                 turbine_dict[name] = 0.0
 
         return turbine_dict
-
-    @staticmethod
-    def parse_cpp_out(cpp_out):
-        objective_value = cpp_out[0]
-
-        var_value_dict = {}
-        for line in cpp_out[1:]:
-            var_name, value = line.split(',')
-            var_value_dict[var_name] = value
-
-        return objective_value, var_value_dict
 
     @staticmethod
     def create_bounds_equ_dict(bounds_equ, all_coefficients):
@@ -130,6 +155,11 @@ class Simulator:
 
     @staticmethod
     def filter_equations(constr_equations):
+        """Separates the constraint equation into constraint and bound types.
+
+        Bound types: equations with only ONE variable, e.g. x <= 100
+        Constraint type: general equation, e.g. x + 1 = 50
+        """
         constraints = []
         bounds = []
 
@@ -140,66 +170,37 @@ class Simulator:
                 constraints.append(equ)
         return constraints, bounds
 
-    def update_outfile(self, parsed_cpp_out, current_consumption, all_names):
-        title_names = all_names + 'object_value'
+    def update_outfile(self, current_consumption, var_val_dict, object_val):
 
+        with open(os.path.join(self.run_dir_path, CONS_FILE_NAME), 'a') as out:
+            values = [str(item) for item in list(current_consumption.values())]
+            out.write(' '.join(values) + '\n')
 
-class SystemState:
+        with open(os.path.join(self.run_dir_path, OBJ_FILE_NAME), 'a') as out:
+            out.write(str(object_val) + '\n')
 
-    def __init__(self, current_consumption, time_step):
-        self.current_consumation = current_consumption
-        self.time_step = time_step
-        self.tank_levels = {}
-        self.pipe_through_puts = {}
-        self.drainer_outlet = {}
-        self.source_input = {}
-
-    def set_system_state(self,
-                         consumer_consumptions,
-                         tank_levels,
-                         pipe_throughput,
-                         drainer_outlet,
-                         source_input):
-
-        self.current_consumation = consumer_consumptions
-        self.tank_levels = tank_levels
-        self.pipe_through_puts = pipe_throughput
-        self.drainer_outlet = drainer_outlet
-        self.source_input = source_input
-        self.append_state_to_file()
-
-    def update(self, parsed_cpp_out, current_consumption, all_names):
-        self.current_consumation = current_consumption
-
-
-    def parse_cpp_out(self, cpp_out):
-        objective_value = cpp_out[0]
-
-        variables = {}
-        for line in cpp_out[1:]:
-            var_name, value = line.split(',')
-            variables[var_name] = value
-
-    def append_state_to_file(self):
-        raise NotImplementedError
-
-    def init_state_file(self):
-        raise NotImplementedError
+        with open(os.path.join(self.run_dir_path, VAR_FILE_NAME), 'a') as out:
+            values = [str(item) for item in list(var_val_dict.values())]
+            out.write(' '.join(values) + '\n')
 
 
 def call_cpp_optimizer(exe_path, bounds_file_name,
-                       matrix_file_name, data_dir_path):
+                       matrix_file_name, data_dir_path, cpp_file_name):
     """Runs a subprocess on the cpp optimizer and gets the """
 
     if not os.path.isfile(exe_path):
         raise IOError('Cpp executable does not exist, needs to be compiled.')
 
-    call_str = ' '.join([exe_path, '<', bounds_file_name,
-                                   '<', matrix_file_name])
-
-    print(call_str)
-    print(data_dir_path)
+    print(exe_path)
+    call_str = '{} {} {} {}'.format(CPP_EXE_FILE_PATH,
+                                    bounds_file_name,
+                                    matrix_file_name,
+                                    cpp_file_name)
 
     subprocess.call(call_str, cwd=data_dir_path, shell=True)
 
-    os.remove(os.path.join(data_dir_path, 'output.txt'))
+
+def get_datetime_tag():
+    """Returns a datetime string in the format SSMMHH_ddmmYY."""
+
+    return datetime.datetime.now().strftime('%H%M%S_%d%m%Y')
