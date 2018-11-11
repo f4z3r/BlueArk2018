@@ -84,17 +84,18 @@ class Simulator:
                                         os.path.join(self.run_dir_path,
                                                      MATRIX_FILE_NAME))
             all_coefficients = equ_parse.get_all_coefficients(constr_equations)
-            bounds_equ_dict = self.create_bounds_equ_dict(bounds, all_coefficients)
+            bounds_equ_dict = self.create_bounds_equ_dict(bounds,
+                                                          all_coefficients)
             equ_parse.write_bounds_file(bounds_equ_dict, turbine_dict,
                                         os.path.join(self.run_dir_path,
                                                      BOUNDS_FILE_NAME),
                                         len(constrains))
 
             call_cpp_optimizer(CPP_EXE_FILE_PATH,
-                                     BOUNDS_FILE_NAME,
-                                     MATRIX_FILE_NAME,
-                                     self.run_dir_path,
-                                     CPP_FILE_NAME)
+                               BOUNDS_FILE_NAME,
+                               MATRIX_FILE_NAME,
+                               self.run_dir_path,
+                               CPP_FILE_NAME)
 
             var_val_dict, object_val = self.parse_cpp_out(self.run_dir_path,
                                                           CPP_FILE_NAME)
