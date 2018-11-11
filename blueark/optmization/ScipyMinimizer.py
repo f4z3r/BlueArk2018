@@ -77,7 +77,7 @@ class ScipySolver:
                           x0=self.init_guess,
                           constraints=constrains,
                           bounds=bounds,
-                          options={'disp': True})
+                          options={'disp': False})
 
         return result
 
@@ -89,7 +89,6 @@ class ScipySolver:
         """
 
         objective_value = -1.0 * np.dot(self.turbine_params, flow_values)
-        print(-1.0*objective_value)
 
         return objective_value
 

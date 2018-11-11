@@ -101,7 +101,7 @@ def write_bounds_file(bounds_equ_dict, turbine_params, file_path, n_equ):
     assert len(turbine_params) == len(bounds_equ_dict.keys())
     with open(file_path, 'w') as outfile:
 
-        outfile.write(str(len(turbine_params)) + ' ' + str(n_equ) + "\n")
+        outfile.write(str(turbine_params) + ' ' + str(n_equ) + "\n")
 
         all_names = bounds_equ_dict.keys()
 
