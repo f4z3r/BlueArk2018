@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import numpy as np
 
 
@@ -8,7 +9,7 @@ class DataAugmenter:
 
     def generate_consumptions(self):
 
-        consumptions = {}
+        consumptions = OrderedDict()
 
         for idx in range(self.n_consumer):
             consumer = Consumer()
@@ -44,6 +45,7 @@ class Consumer:
     def bounded_random_walk(length, lower_bound, upper_bound, start, end, std):
         """Creates random walk data bounded by lower and upper bound with
         spcified start and end value as well as standard deviation."""
+
         assert (lower_bound <= start and lower_bound <= end)
         assert (start <= upper_bound and end <= upper_bound)
 
